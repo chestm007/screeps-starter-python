@@ -1,4 +1,5 @@
 import harvester
+import creep_factory
 # defs is a package which claims to export all constants and some JavaScript objects, but in reality does
 #  nothing. This is useful mainly when using an editor like PyCharm, so that it 'knows' that things like Object, Creep,
 #  Game, etc. do exist.
@@ -40,10 +41,6 @@ def main():
             # spawning.
             elif num_creeps < 15 and spawn.room.energyAvailable >= spawn.room.energyCapacityAvailable:
                 # If we have more energy, spawn a bigger creep.
-                if spawn.room.energyCapacityAvailable >= 350:
-                    spawn.createCreep([WORK, CARRY, CARRY, MOVE, MOVE, MOVE])
-                else:
-                    spawn.createCreep([WORK, CARRY, MOVE, MOVE])
-
+                creep_factory.create_creep(creep_factory.HARVESTER, spawn)
 
 module.exports.loop = main

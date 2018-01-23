@@ -201,55 +201,6 @@ def build(config):
     print("build successful.")
 
 
-def upload(config):
-    """
-    Uploads JavaScript files found in the output directory to the Screeps server.
-
-    :type config: Configuration
-    """
-
-    module_files = {}
-
-    dist_dir = os.path.join(config.base_dir, 'dist')
-
-    for file_name in os.listdir(dist_dir):
-        with open(os.path.join(dist_dir, file_name)) as f:
-            module_files[os.path.splitext(file_name)[0]] = f.read()
-
-    if config.ptr:
-        post_url = '{}/ptr/api/user/code'.format(config.url)
-    else:
-        post_url = '{}/api/user/code'.format(config.url)
-
-    post_data = json.dumps({'modules': module_files, 'branch': config.branch}).encode('utf-8')
-
-    auth_pair = config.username.encode('utf-8') + b':' + config.password.encode('utf-8')
-
-    headers = {
-        'Content-Type': b'application/json; charset=utf-8',
-        'Authorization': b'Basic ' + base64.b64encode(auth_pair),
-    }
-    request = urllib.request.Request(post_url, post_data, headers)
-
-    if config.url != 'https://screeps.com':
-        print("uploading files to {}, branch {}{}..."
-              .format(config.url, config.branch, " on PTR" if config.ptr else ""))
-    else:
-        print("uploading files to branch {}{}...".format(config.branch, " on PTR" if config.ptr else ""))
-
-    # any errors will be thrown.
-    with urllib.request.urlopen(request) as response:
-        decoded_data = response.read().decode('utf-8')
-        json_response = json.loads(decoded_data)
-        if not json_response.get('ok'):
-            if 'error' in json_response:
-                raise Exception("upload error: {}".format(json_response['error']))
-            else:
-                raise Exception("upload error: {}".format(json_response))
-
-    print("upload successful.")
-
-
 def install_env(config):
     """
     Creates a virtualenv environment in the `env/` folder, and attempts to install `transcrypt` into it.
@@ -267,9 +218,9 @@ def install_env(config):
         if not os.path.exists(env_dir):
             print("creating virtualenv environment...")
             if sys.version_info >= (3, 5):
-                args = ['virtualenv', '--system-site-packages', env_dir]
-            else:
-                args = ['virtualenv', '-p', 'python3.5', '--system-site-packages', env_dir]
+                #args = ['virtualenv', '--system-site-packages', env_dir]
+            #else:
+                args = ['virtualenv', '-p', 'python3', '--system-site-packages', env_dir]
 
             ret = subprocess.Popen(args, cwd=config.base_dir).wait()
 
@@ -326,7 +277,6 @@ def main():
         expander_control.expand_files()
 
     build(config)
-    upload(config)
 
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@ from typing import Optional, Type, Union
 
 from .memory import _Memory
 from .room import Room, RoomPosition
+from defs import constants
 
 
 class RoomObject:
@@ -11,12 +12,15 @@ class RoomObject:
     :type room: Room
     """
 
-    def __init__(self, pos: RoomPosition, room: Room) -> None:
+    def __init__(self, pos: RoomPosition, room: Room, structureType: constants, hits: int, maxHits: int) -> None:
         """
         WARNING: This constructor is purely for type completion, and does not exist in the game.
         """
         self.pos = pos
         self.room = room
+        self.structureType = structureType
+        self.hits = hits
+        self.maxHits = maxHits
 
 
 # noinspection PyPep8Naming

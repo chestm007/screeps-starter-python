@@ -26,13 +26,13 @@ def _should_create_creep(spawn):
     if not spawn.spawning:
         # Get the number of our creeps in the room.
         num_creeps = _.sum(Game.creeps, lambda c: c.pos.roomName == spawn.pos.roomName)
-        # If there are no creeps, spawn a creep once energy is at 250 or more
-        # If there are less than 15 creeps but at least one, wait until all spawns and extensions are full before
+        # If there are less than 3 creeps, spawn a creep once energy is at 250 or more
+        # If there are less than 10 creeps but at least one, wait until all spawns and extensions are full before
         # spawning.
-        if num_creeps < 3 and spawn.room.energyAvailable >= 200:
+        if num_creeps < 3 and spawn.room.energyAvailable >= 250:
             return HARVESTER
 
-        elif num_creeps < 15 and spawn.room.energyAvailable >= spawn.room.energyCapacityAvailable:
+        elif num_creeps < 10 and spawn.room.energyAvailable >= spawn.room.energyCapacityAvailable:
             return HARVESTER
 
 

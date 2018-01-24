@@ -23,17 +23,16 @@ class Worker(Creeps):
     body_composition = {
         'small': [WORK, CARRY, MOVE, MOVE],
         'medium': [WORK, WORK, CARRY, MOVE, MOVE],
-        'large': [WORK, WORK, WORK, CARRY, CARRY, MOVE, MOVE]
+        'large': [WORK, WORK, WORK, CARRY, CARRY, MOVE, MOVE],
+        'xlarge': [WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE]
     }
 
     @staticmethod
     def factory(spawn):
-        if spawn.room.energyAvailable >= 550:
-            body = Worker.body_composition['large']
-        elif spawn.room.energyAvailable >= 350:
-            body = Worker.body_composition['medium']
-        else:
-            body = Worker.body_composition['small']
+        body = None
+        for size in ['xlarge', 'large', 'medium', 'small']:
+            if spawn.room.energyAvailable >= Worker._calculate_creation_cost(Worker.body_composition[size]):
+                body = Worker.body_composition[size]
         console.log('spawning new worker creep')
         Creeps.create(body, spawn, Builder.role if Worker._should_be_builder() else Harvester.role)
 

@@ -12,6 +12,20 @@ __pragma__('noalias', 'update')
 
 class Creeps(object):
     body_composition = None
+    body_part_cost = {
+        MOVE: 50,
+        WORK: 100,
+        CARRY: 50,
+        ATTACK: 80,
+        RANGED_ATTACK: 150,
+        HEAL: 250,
+        TOUGH: 10,
+        CLAIM: 600
+    }
+
+    @staticmethod
+    def _calculate_creation_cost(body_composition):
+        return sum(Creeps.body_part_cost[part] for part in body_composition)
 
     @staticmethod
     def factory(spawn):

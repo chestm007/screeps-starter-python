@@ -25,7 +25,7 @@ class Creeps(object):
 
     @staticmethod
     def _calculate_creation_cost(body_composition):
-        return sum(Creeps.body_part_cost[part] for part in body_composition)
+        return sum([Creeps.body_part_cost[part] for part in body_composition])
 
     @staticmethod
     def factory(spawn):

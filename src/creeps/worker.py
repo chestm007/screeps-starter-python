@@ -30,10 +30,10 @@ class Worker(Creeps):
     @staticmethod
     def factory(spawn):
         body = None
-        for size in ['xlarge', 'large', 'medium', 'small']:
+        for size in ['small', 'medium', 'large', 'xlarge']:
             if spawn.room.energyAvailable >= Worker._calculate_creation_cost(Worker.body_composition[size]):
                 body = Worker.body_composition[size]
-        console.log('spawning new worker creep')
+        console.log('spawning new {} worker creep'.format(body))
         Creeps.create(body, spawn, Builder.role if Worker._should_be_builder() else Harvester.role)
 
     @staticmethod
@@ -141,14 +141,20 @@ class Builder(Worker):
             if target:
                 target_obj = Game.getObjectById(creep.memory.target)
                 if target_obj.structureType == STRUCTURE_ROAD:
-                    if target_obj.hits >= target_obj.maxHits / 2:
+                    if target_obj.hits >= target_obj.hitsMax / 3 * 2:
                         del creep.memory.target
                         Builder._get_target(creep)
-                    if creep.repair(target) == ERR_NOT_IN_RANGE:
+                    res = creep.repair(target)
+                    if res == ERR_NOT_IN_RANGE:
                         creep.moveTo(target)
                         return
-                if creep.build(target) == ERR_NOT_IN_RANGE:
+                    elif res == OK:
+                        return
+                res = creep.build(target)
+                if res == ERR_NOT_IN_RANGE:
                     creep.moveTo(target)
+                    return
+                elif res == OK:
                     return
             del creep.memory.target
 

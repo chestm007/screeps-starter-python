@@ -26,7 +26,7 @@ class Worker(Creeps):
 
     @staticmethod
     def factory(spawn):
-        if spawn.room.energyAvailable >= 450:
+        if spawn.room.energyAvailable >= 550:
             body = Worker.body_composition['large']
         elif spawn.room.energyAvailable >= 350:
             body = Worker.body_composition['medium']

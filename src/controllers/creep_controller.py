@@ -40,3 +40,7 @@ class CreepController(object):
     def get_creep_object_from_type(creep):
         return CreepController.creep_type_map[creep.memory.role]
 
+    @staticmethod
+    def say_role(creep):
+        creep.say(creep.memory.role)
+

@@ -31,4 +31,7 @@ def main():
     for name in Object.keys(Game.creeps):
         CreepController.run_creep(Game.creeps[name])
 
+    for name in Object.keys(Game.creeps):
+        CreepController.say_role(Game.creeps[name])
+
 module.exports.loop = main

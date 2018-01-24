@@ -13,6 +13,8 @@ __pragma__('noalias', 'update')
 
 MAX_HARVESTERS = 4
 MIN_HARVESTERS = 3
+ROOM_HEIGHT = 50
+ROOM_WIDTH = 50
 
 
 class Worker(Creeps):
@@ -110,6 +112,16 @@ class Worker(Creeps):
         if not creep.memory.filling and creep.carry.energy <= 0:
             return True
 
+    @staticmethod
+    def get_closest_to_creep(creep, obj_list):
+        least_distance = 1000
+        for r in obj_list:
+            distance_to_creep = r.pos.getRangeTo(creep.pos)
+            if distance_to_creep < least_distance:
+                least_distance = distance_to_creep
+                closest = r
+        return closest
+
 
 class Builder(Worker):
     role = 'builder'
@@ -146,12 +158,24 @@ class Builder(Worker):
         if creep.memory.target:
             target = Game.getObjectById(creep.memory.target)
         else:
-            structures_in_room = _(creep.room.find(FIND_STRUCTURES))
-            target = structures_in_room.filter(
-                lambda s: s.structureType == STRUCTURE_ROAD and s.hits < s.hitsMax / 3
-            ).sample()
+            structures_in_room = creep.room.find(FIND_STRUCTURES)
+            target = Worker.get_closest_to_creep(
+                creep,
+                structures_in_room.filter(
+                    lambda s: s.hits < s.hitsMax / 2 and
+                              s.pos.getRangeTo(Game.getObjectById(creep.memory.source).pos) < ROOM_HEIGHT / 2
+                )
+            )
             if not target:
-                target = creep.pos.findClosestByRange(FIND_CONSTRUCTION_SITES)
+                construction_sites = creep.room.find(FIND_CONSTRUCTION_SITES)
+                target = Worker.get_closest_to_creep(
+                    creep,
+                    construction_sites.filter(
+                        lambda s: s.structureType == STRUCTURE_ROAD
+                    )
+                )
+                if not target:
+                    target = creep.pos.findClosestByRange(FIND_CONSTRUCTION_SITES)
             creep.memory.target = target.id
         return target
 
@@ -221,20 +245,16 @@ class Harvester(Worker):
             target = Game.getObjectById(creep.memory.target)
         else:
             structures_in_room = _(creep.room.find(FIND_STRUCTURES))
-            # fill extentions first
+            # fill extentions and spawns first
             target = structures_in_room.filter(
-                lambda s: s.structureType == STRUCTURE_EXTENSION and s.energy < s.energyCapacit
+                lambda s: (s.structureType == STRUCTURE_EXTENSION or s.structureType == STRUCTURE_SPAWN)
+                           and s.energy < s.energyCapacity
             ).sample()
             if not target:
-                # if spawn has < 250 energy, refill it
+                # Get a random new target.
                 target = structures_in_room.filter(
-                    lambda s: s.structureType == STRUCTURE_SPAWN and s.energy < 250
+                    lambda s: ((s.structureType == STRUCTURE_SPAWN or s.structureType == STRUCTURE_EXTENSION)
+                               and s.energy < s.energyCapacity) or s.structureType == STRUCTURE_CONTROLLER
                 ).sample()
-                if not target:
-                    # Get a random new target.
-                    target = structures_in_room.filter(
-                        lambda s: ((s.structureType == STRUCTURE_SPAWN or s.structureType == STRUCTURE_EXTENSION)
-                                   and s.energy < s.energyCapacity) or s.structureType == STRUCTURE_CONTROLLER
-                    ).sample()
             creep.memory.target = target.id
         return target

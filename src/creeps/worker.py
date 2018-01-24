@@ -11,8 +11,8 @@ __pragma__('noalias', 'type')
 __pragma__('noalias', 'update')
 
 
-MAX_HARVESTERS = 6
-MIN_HARVESTERS = 5
+MAX_HARVESTERS = 4
+MIN_HARVESTERS = 3
 
 
 class Worker(Creeps):
@@ -20,14 +20,18 @@ class Worker(Creeps):
 
     body_composition = {
         'small': [WORK, CARRY, MOVE, MOVE],
-        'large': [WORK, CARRY, CARRY, MOVE, MOVE, MOVE]
+        'medium': [WORK, WORK, CARRY, MOVE, MOVE],
+        'large': [WORK, WORK, WORK, CARRY, CARRY, MOVE, MOVE]
     }
 
     @staticmethod
     def factory(spawn):
-        body = (
-            Worker.body_composition['large'] if spawn.room.energyAvailable >= 350
-            else Worker.body_composition['small'])
+        if spawn.room.energyAvailable >= 450:
+            body = Worker.body_composition['large']
+        elif spawn.room.energyAvailable >= 350:
+            body = Worker.body_composition['medium']
+        else:
+            body = Worker.body_composition['small']
         console.log('spawning new worker creep')
         Creeps.create(body, spawn, Builder.role if Worker._should_be_builder() else Harvester.role)
 
@@ -73,7 +77,7 @@ class Worker(Creeps):
             source = Game.getObjectById(creep.memory.source)
         else:
             # Get a random new source and save it
-            source = creep.pos.findClosestByRange(FIND_SOURCES)
+            source = _.sample(creep.room.find(FIND_SOURCES))
             creep.memory.source = source.id
 
         # If we're near the source, harvest it - otherwise, move to it.
@@ -88,11 +92,11 @@ class Worker(Creeps):
     @staticmethod
     def creep_empty(creep):
         creep.memory.filling = True
+        del creep.memory.target
 
     @staticmethod
     def creep_full(creep):
         creep.memory.filling = False
-        del creep.memory.source
 
     @staticmethod
     def _is_creep_full(creep):
@@ -135,7 +139,6 @@ class Builder(Worker):
                 if creep.build(target) == ERR_NOT_IN_RANGE:
                     creep.moveTo(target)
                     return
-            del creep.memory.source
             del creep.memory.target
 
     @staticmethod
@@ -218,15 +221,20 @@ class Harvester(Worker):
             target = Game.getObjectById(creep.memory.target)
         else:
             structures_in_room = _(creep.room.find(FIND_STRUCTURES))
-            # if spawn has < 250 energy, refill it
+            # fill extentions first
             target = structures_in_room.filter(
-                lambda s: s.structureType == STRUCTURE_SPAWN and s.energy < 250
+                lambda s: s.structureType == STRUCTURE_EXTENSION and s.energy < s.energyCapacit
             ).sample()
             if not target:
-                # Get a random new target.
+                # if spawn has < 250 energy, refill it
                 target = structures_in_room.filter(
-                    lambda s: ((s.structureType == STRUCTURE_SPAWN or s.structureType == STRUCTURE_EXTENSION)
-                               and s.energy < s.energyCapacity) or s.structureType == STRUCTURE_CONTROLLER) \
-                    .sample()
+                    lambda s: s.structureType == STRUCTURE_SPAWN and s.energy < 250
+                ).sample()
+                if not target:
+                    # Get a random new target.
+                    target = structures_in_room.filter(
+                        lambda s: ((s.structureType == STRUCTURE_SPAWN or s.structureType == STRUCTURE_EXTENSION)
+                                   and s.energy < s.energyCapacity) or s.structureType == STRUCTURE_CONTROLLER
+                    ).sample()
             creep.memory.target = target.id
         return target

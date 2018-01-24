@@ -29,13 +29,10 @@ def _should_create_creep(spawn):
         # If there are no creeps, spawn a creep once energy is at 250 or more
         # If there are less than 15 creeps but at least one, wait until all spawns and extensions are full before
         # spawning.
-        if num_creeps < 0 and spawn.room.energyAvailable >= 200:
+        if num_creeps < 3 and spawn.room.energyAvailable >= 200:
             return HARVESTER
 
         elif num_creeps < 15 and spawn.room.energyAvailable >= spawn.room.energyCapacityAvailable:
-            return HARVESTER
-
-        elif num_creeps < 15 and spawn.room.energyAvailable >= 250:
             return HARVESTER
 
 

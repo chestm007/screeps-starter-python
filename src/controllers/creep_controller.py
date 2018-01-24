@@ -19,6 +19,7 @@ class CreepController(object):
 
     creep_body_map = {
         '.'.join(worker.Worker.body_composition['small']): 'harvester',
+        '.'.join(worker.Worker.body_composition['medium']): 'harvester',
         '.'.join(worker.Worker.body_composition['large']): 'harvester'
     }
 

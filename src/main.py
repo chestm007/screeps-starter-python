@@ -1,9 +1,8 @@
-import harvester
 import creep_factory
 # defs is a package which claims to export all constants and some JavaScript objects, but in reality does
 #  nothing. This is useful mainly when using an editor like PyCharm, so that it 'knows' that things like Object, Creep,
 #  Game, etc. do exist.
-from creep_controller import CreepController
+from controllers.creep_controller import CreepController
 from defs import *
 
 # These are currently required for Transcrypt in order to use the following names in JavaScript.
@@ -24,24 +23,12 @@ def main():
     Main game logic loop.
     """
 
-    # Run each creep
-    for name in Object.keys(Game.creeps):
-        creep = Game.creeps[name]
-        CreepController.run_creep(creep)
-
     # Run each spawn
     for name in Object.keys(Game.spawns):
-        spawn = Game.spawns[name]
-        if not spawn.spawning:
-            # Get the number of our creeps in the room.
-            num_creeps = _.sum(Game.creeps, lambda c: c.pos.roomName == spawn.pos.roomName)
-            # If there are no creeps, spawn a creep once energy is at 250 or more
-            if num_creeps < 0 and spawn.room.energyAvailable >= 250:
-                creep_factory.create_creep(creep_factory.HARVESTER, spawn)
-            # If there are less than 15 creeps but at least one, wait until all spawns and extensions are full before
-            # spawning.
-            elif num_creeps < 15 and spawn.room.energyAvailable >= spawn.room.energyCapacityAvailable:
-                # If we have more energy, spawn a bigger creep.
-                creep_factory.create_creep(creep_factory.HARVESTER, spawn)
+        creep_factory.try_create_creep(Game.spawns[name])
+
+    # Run each creep
+    for name in Object.keys(Game.creeps):
+        CreepController.run_creep(Game.creeps[name])
 
 module.exports.loop = main

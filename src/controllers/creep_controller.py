@@ -1,5 +1,5 @@
+from creeps import worker
 from defs import *
-import creep_factory
 
 __pragma__('noalias', 'name')
 __pragma__('noalias', 'undefined')
@@ -13,12 +13,13 @@ __pragma__('noalias', 'update')
 
 class CreepController(object):
     creep_type_map = {
-        'harvester': creep_factory.Harvester
+        'harvester': worker.Harvester,
+        'builder': worker.Builder
     }
 
     creep_body_map = {
-        '.'.join(creep_factory.SmallHarvester.body_composition): 'harvester',
-        '.'.join(creep_factory.LargeHarvester.body_composition): 'harvester'
+        '.'.join(worker.Worker.body_composition['small']): 'harvester',
+        '.'.join(worker.Worker.body_composition['large']): 'harvester'
     }
 
     @staticmethod
@@ -37,3 +38,4 @@ class CreepController(object):
     @staticmethod
     def get_creep_object_from_type(creep):
         return CreepController.creep_type_map[creep.memory.role]
+

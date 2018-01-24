@@ -1,3 +1,4 @@
+from creeps.creeps import Creeps
 from defs import *
 
 __pragma__('noalias', 'name')
@@ -10,5 +11,13 @@ __pragma__('noalias', 'type')
 __pragma__('noalias', 'update')
 
 
-def run_soldier(creep):
+class Soldier(Creeps):
+    role = 'soldier'
+
+
+class RangedSoldier(Soldier):
+    pass
+
+
+class CombatSoldier(Soldier):
     pass

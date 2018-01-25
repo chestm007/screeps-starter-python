@@ -22,9 +22,9 @@ class Worker(Creeps):
 
     body_composition = {
         'small': [WORK, CARRY, MOVE, MOVE],
-        'medium': [WORK, WORK, CARRY, MOVE, MOVE],
-        'large': [WORK, WORK, WORK, CARRY, CARRY, MOVE, MOVE],
-        'xlarge': [WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE]
+        'medium': [WORK, WORK, CARRY, MOVE, MOVE, MOVE],
+        'large': [WORK, WORK, WORK, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE],
+        'xlarge': [WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE]
     }
 
     @staticmethod
@@ -34,7 +34,7 @@ class Worker(Creeps):
             if spawn.room.energyAvailable >= Worker._calculate_creation_cost(Worker.body_composition[size]):
                 body = Worker.body_composition[size]
         console.log('spawning new {} worker creep'.format(body))
-        Creeps.create(body, spawn, Builder.role if Worker._should_be_builder() else Harvester.role)
+        Creeps.create(body, spawn, Harvester.role)
 
     @staticmethod
     def run_creep(creep):
@@ -47,18 +47,21 @@ class Worker(Creeps):
 
     @staticmethod
     def _get_num_harvesters():
-        return len([Game.creeps[name] for name in Object.keys(Game.creeps) if str(Game.creeps[name].memory.role) == Harvester.role])
+        return len([Game.creeps[name] for name in Object.keys(Game.creeps)
+                    if str(Game.creeps[name].memory.role) == Harvester.role])
 
     @staticmethod
-    def _should_be_builder():
-        num_harvesters = Worker._get_num_harvesters()
-        if num_harvesters >= MAX_HARVESTERS:
-            return True
+    def _should_be_builder(creep):
+        if Worker._get_num_harvesters() >= MAX_HARVESTERS:
+            if creep.room.find(FIND_CONSTRUCTION_SITES):
+                return True
 
     @staticmethod
-    def _should_be_harvester():
-        num_harvesters = Worker._get_num_harvesters()
-        if num_harvesters < MIN_HARVESTERS:
+    def _should_be_harvester(creep):
+        if creep.room.find(FIND_CONSTRUCTION_SITES):
+            if Worker._get_num_harvesters() < MIN_HARVESTERS:
+                return True
+        else:
             return True
 
     @staticmethod
@@ -127,7 +130,7 @@ class Builder(Worker):
 
     @staticmethod
     def run_creep(creep):
-        if Builder._should_be_harvester():
+        if Builder._should_be_harvester(creep):
             Builder._become_harvester(creep)
             return
 
@@ -164,13 +167,14 @@ class Builder(Worker):
             target = Game.getObjectById(creep.memory.target)
         else:
             structures_in_room = creep.room.find(FIND_STRUCTURES)
-            target = Worker.get_closest_to_creep(
-                creep,
-                structures_in_room.filter(
-                    lambda s: s.hits < s.hitsMax / 2 and
-                              s.pos.getRangeTo(Game.getObjectById(creep.memory.source).pos) < ROOM_HEIGHT / 2
+            if creep.memory.source:
+                target = Worker.get_closest_to_creep(
+                    creep,
+                    structures_in_room.filter(
+                        lambda s: s.hits < s.hitsMax / 2 and
+                                  s.pos.getRangeTo(Game.getObjectById(creep.memory.source).pos) < ROOM_HEIGHT / 2
+                    )
                 )
-            )
             if not target:
                 construction_sites = creep.room.find(FIND_CONSTRUCTION_SITES)
                 target = Worker.get_closest_to_creep(
@@ -181,7 +185,8 @@ class Builder(Worker):
                 )
                 if not target:
                     target = creep.pos.findClosestByRange(FIND_CONSTRUCTION_SITES)
-            creep.memory.target = target.id
+            if target:
+                creep.memory.target = target.id
         return target
 
 
@@ -194,7 +199,7 @@ class Harvester(Worker):
         Runs a creep as a generic harvester.
         :param creep: The creep to run
         """
-        if Harvester._should_be_builder():
+        if Harvester._should_be_builder(creep):
             Harvester._become_builder(creep)
             return
 
@@ -249,17 +254,17 @@ class Harvester(Worker):
         if creep.memory.target:
             target = Game.getObjectById(creep.memory.target)
         else:
-            structures_in_room = _(creep.room.find(FIND_STRUCTURES))
+            structures_in_room = creep.room.find(FIND_STRUCTURES)
             # fill extentions and spawns first
-            target = structures_in_room.filter(
-                lambda s: (s.structureType == STRUCTURE_EXTENSION or s.structureType == STRUCTURE_SPAWN)
-                           and s.energy < s.energyCapacity
-            ).sample()
+            target = Worker.get_closest_to_creep(
+                creep,
+                structures_in_room.filter(
+                    lambda s: (s.structureType == STRUCTURE_EXTENSION or s.structureType == STRUCTURE_SPAWN)
+                              and s.energy < s.energyCapacity
+            ))
             if not target:
                 # Get a random new target.
-                target = structures_in_room.filter(
-                    lambda s: ((s.structureType == STRUCTURE_SPAWN or s.structureType == STRUCTURE_EXTENSION)
-                               and s.energy < s.energyCapacity) or s.structureType == STRUCTURE_CONTROLLER
-                ).sample()
-            creep.memory.target = target.id
+                target = _(structures_in_room).filter(lambda s: s.structureType == STRUCTURE_CONTROLLER).sample()
+            if target:
+                creep.memory.target = target.id
         return target

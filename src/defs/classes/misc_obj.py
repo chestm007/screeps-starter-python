@@ -12,7 +12,7 @@ class RoomObject:
     :type room: Room
     """
 
-    def __init__(self, pos: RoomPosition, room: Room, structureType: constants, hits: int, maxHits: int) -> None:
+    def __init__(self, pos: RoomPosition, room: Room, structureType: constants, hits: int, hitsMax: int) -> None:
         """
         WARNING: This constructor is purely for type completion, and does not exist in the game.
         """
@@ -20,7 +20,7 @@ class RoomObject:
         self.room = room
         self.structureType = structureType
         self.hits = hits
-        self.maxHits = maxHits
+        self.hitsMax = hitsMax
 
 
 # noinspection PyPep8Naming

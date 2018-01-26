@@ -15,28 +15,23 @@ HARVESTER = 'harvester'
 SOLDIER = 'soldier'
 
 
-def create_creep(creep_type, spawn):
+def create_creep(creep_type, spawn, num_workers):
     if creep_type == HARVESTER:
-        Worker.factory(spawn)
+        Worker.factory(spawn, num_workers)
     if creep_type == SOLDIER:
-        Soldier.factory(spawn)
+        Soldier.factory(spawn, num_workers)
 
 
 def _should_create_creep(spawn):
     if not spawn.spawning:
         # Get the number of our creeps in the room.
-        num_creeps = _.sum(Game.creeps, lambda c: c.pos.roomName == spawn.pos.roomName)
+        num_workers = _.sum(Game.creeps, lambda c: c.pos.roomName == spawn.pos.roomName)
         # If there are less than 3 creeps, spawn a creep once energy is at 250 or more
         # If there are less than 10 creeps but at least one, wait until all spawns and extensions are full before
         # spawning.
-        if num_creeps < 3 and spawn.room.energyAvailable >= 250:
-            return HARVESTER
+        if (
+                            num_workers < 3 and spawn.room.energyAvailable >= 250
+                or num_workers < 5 and spawn.room.energyAvailable >= spawn.room.energyCapacityAvailable):
+            create_creep(HARVESTER, spawn, num_workers)
 
-        elif num_creeps < 5 and spawn.room.energyAvailable >= spawn.room.energyCapacityAvailable:
-            return HARVESTER
 
-
-def try_create_creep(spawn):
-    creep_type = _should_create_creep(spawn)
-    if creep_type:
-        create_creep(creep_type, spawn)

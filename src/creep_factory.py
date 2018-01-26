@@ -12,6 +12,7 @@ __pragma__('noalias', 'type')
 __pragma__('noalias', 'update')
 
 HARVESTER = 'harvester'
+BUILDER = 'builder'
 SOLDIER = 'soldier'
 
 
@@ -22,10 +23,11 @@ def create_creep(creep_type, spawn, num_workers):
         Soldier.factory(spawn, num_workers)
 
 
-def _should_create_creep(spawn):
+def try_create_creep(spawn):
     if not spawn.spawning:
         # Get the number of our creeps in the room.
-        num_workers = _.sum(Game.creeps, lambda c: c.pos.roomName == spawn.pos.roomName)
+        num_workers = _.sum(Game.creeps, lambda c: c.pos.roomName == spawn.pos.roomName and
+                                                   (c.memory.role == HARVESTER or c.memory.role == BUILDER))
         # If there are less than 3 creeps, spawn a creep once energy is at 250 or more
         # If there are less than 10 creeps but at least one, wait until all spawns and extensions are full before
         # spawning.

@@ -37,7 +37,7 @@ class Worker(Creeps):
         Creeps.create(body, spawn, Harvester.role)
 
     @staticmethod
-    def run_creep(creep):
+    def _pre_run_checks(creep):
         if Worker._is_creep_empty(creep):
             Worker.creep_empty(creep)
         elif Worker._is_creep_full(creep):
@@ -132,9 +132,11 @@ class Builder(Worker):
     def run_creep(creep):
         if Builder._should_be_harvester(creep):
             Builder._become_harvester(creep)
+            console.log('{} is becoming a harvester'.format(creep.name))
+            Harvester.run_creep(creep)
             return
 
-        Worker.run_creep(creep)
+        Worker._pre_run_checks(creep)
 
         if creep.memory.filling:
             Builder.move_to_and_harvest(creep)
@@ -201,9 +203,10 @@ class Harvester(Worker):
         """
         if Harvester._should_be_builder(creep):
             Harvester._become_builder(creep)
+            Builder.run_creep(creep)
             return
 
-        Worker.run_creep(creep)
+        Worker._pre_run_checks(creep)
 
         if creep.memory.filling:
             Harvester.move_to_and_harvest(creep)

@@ -32,7 +32,7 @@ def _should_create_creep(spawn):
         if num_creeps < 3 and spawn.room.energyAvailable >= 250:
             return HARVESTER
 
-        elif num_creeps < 6 and spawn.room.energyAvailable >= spawn.room.energyCapacityAvailable:
+        elif num_creeps < 5 and spawn.room.energyAvailable >= spawn.room.energyCapacityAvailable:
             return HARVESTER
 
 

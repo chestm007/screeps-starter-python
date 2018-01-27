@@ -33,24 +33,30 @@ class Creeps(object):
         pass
 
     @staticmethod
+    def _recycle_creep_name(role):
+        for creep_name in Object.keys(Memory.creeps):
+            if not Object.keys(Game.creeps).includes(creep_name):
+                return creep_name
+        existing_creeps = []
+        for name in Object.keys(Game.creeps):
+            if name.startswith(role):
+                existing_creeps.append(name)
+            i = 0
+            while True:
+                new_name = '{}{}'.format(role, i)
+                if existing_creeps.includes(new_name):
+                    i += 1
+                else:
+                    creep_name = new_name
+                    break
+            return creep_name
+
+    @staticmethod
     def create(body, spawn, role):
         if body is None:
             console.log('Error creating {}: no defined body composition'.format(role))
         else:
-            existing_creeps = []
-            for name in Object.keys(Game.creeps):
-                if name.startswith(role):
-                    existing_creeps.append(name)
-            i = 0
-            while True:
-                if existing_creeps.includes('{}{}'.format(role, (len(existing_creeps) + i))):
-                    i += 10
-                else:
-                    spawn.createCreep(body, '{type}{number}'.format(
-                        type=role,
-                        number=len(existing_creeps) + i
-                    ), {'memory': {'role': 'harvester'}})
-                    break
+            spawn.createCreep(body, Creeps._recycle_creep_name(role), {'memory': {'role': 'harvester'}})
 
     @staticmethod
     def run_creep(creep):

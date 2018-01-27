@@ -3,6 +3,7 @@ import creep_factory
 #  nothing. This is useful mainly when using an editor like PyCharm, so that it 'knows' that things like Object, Creep,
 #  Game, etc. do exist.
 from controllers.creep_controller import CreepController
+from controllers.planner_controller import PlannerController
 from defs import *
 
 # These are currently required for Transcrypt in order to use the following names in JavaScript.
@@ -22,6 +23,8 @@ def main():
     """
     Main game logic loop.
     """
+    # Perform Scheduled planning tasks
+    PlannerController.run()
 
     # Run each spawn
     for name in Object.keys(Game.spawns):

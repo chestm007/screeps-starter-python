@@ -13,15 +13,20 @@ __pragma__('noalias', 'update')
 
 class CreepController(object):
     creep_type_map = {
-        'harvester': worker.Harvester,
-        'builder': worker.Builder
+        worker.Harvester.role: worker.Harvester,
+        worker.Builder.role: worker.Builder,
+        worker.Miner.role: worker.Miner
     }
 
     creep_body_map = {
         '.'.join(worker.Worker.body_composition['small']): 'harvester',
         '.'.join(worker.Worker.body_composition['medium']): 'harvester',
         '.'.join(worker.Worker.body_composition['large']): 'harvester',
-        '.'.join(worker.Worker.body_composition['xlarge']): 'harvester'
+        '.'.join(worker.Worker.body_composition['xlarge']): 'harvester',
+        '.'.join(worker.Miner.body_composition['small']): worker.Miner.role,
+        '.'.join(worker.Miner.body_composition['medium']): worker.Miner.role,
+        '.'.join(worker.Miner.body_composition['large']): worker.Miner.role,
+        '.'.join(worker.Miner.body_composition['xlarge']): worker.Miner.role,
     }
 
     @staticmethod

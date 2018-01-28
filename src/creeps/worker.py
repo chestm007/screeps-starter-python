@@ -1,4 +1,4 @@
-from creeps.creeps import Creeps
+from creeps.creeps import _Creep
 from defs import *
 
 __pragma__('noalias', 'name')
@@ -17,7 +17,7 @@ ROOM_HEIGHT = 50
 ROOM_WIDTH = 50
 
 
-class Worker(Creeps):
+class Worker(_Creep):
     role = 'harvester'
 
     body_composition = {
@@ -27,195 +27,45 @@ class Worker(Creeps):
         'xlarge': [WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE]
     }
 
-    @staticmethod
-    def factory(spawn, num_workers):
+    def _is_creep_empty(self):
+        # If we're empty, start filling again and remove the saved target
+        if not self.memory.filling and self.carry.energy <= 0:
+            return True
+
+    def _is_creep_full(self):
+        # If we're full, stop filling up and remove the saved source
+        if self.memory.filling and _.sum(self.carry) >= self.carryCapacity:
+            return True
+
+    def creep_full(self):
+        self.memory.filling = False
+
+    def creep_empty(self):
+        self.memory.filling = True
+        del self.memory.target
+
+    def _pre_run_checks(self):
+        if self._is_creep_empty():
+            self.creep_empty()
+        elif self._is_creep_full():
+            self.creep_full()
+        if not self.memory.filling:
+            self.memory.filling = False
+
+    def factory(self, spawn, num_workers):
         body = None
         i = 0
         while True:
             if num_workers >= len(Worker.num_creep_to_size):
                 num_workers = len(Worker.num_creep_to_size) - 1
             size = Worker.num_creep_to_size[num_workers - i]
-            if not size:
-                console.log (num_workers,i, len(Worker.num_creep_to_size))
-                return
-            if spawn.room.energyAvailable >= Worker._calculate_creation_cost(Worker.body_composition[size]):
+            if spawn.room.energyAvailable >= self._calculate_creation_cost(self.body_composition[size]):
                 body = Worker.body_composition[size]
                 break
             i += 1
 
         console.log('spawning new {} worker creep'.format(size))
-        Creeps.create(body, spawn, Worker.role)
-
-    @staticmethod
-    def _pre_run_checks(creep):
-        if Worker._is_creep_empty(creep):
-            Worker.creep_empty(creep)
-        elif Worker._is_creep_full(creep):
-            Worker.creep_full(creep)
-        if not creep.memory.filling:
-            creep.memory.filling = False
-
-    @staticmethod
-    def _get_num_harvesters():
-        return len([Game.creeps[name] for name in Object.keys(Game.creeps)
-                    if str(Game.creeps[name].memory.role) == Harvester.role])
-
-    @staticmethod
-    def _should_be_builder(creep):
-        if Worker._get_num_harvesters() >= MAX_HARVESTERS:
-            if len(creep.room.find(FIND_CONSTRUCTION_SITES)) > 0:
-                return 'construction sites exist'
-            structures_in_room = creep.room.find(FIND_STRUCTURES)
-            if creep.memory.source:
-                target = Worker.get_closest_to_creep(
-                    creep,
-                    structures_in_room.filter(
-                        lambda s: s.hits < s.hitsMax / 2)
-                )
-                if target:
-                    creep.memory.target = target.id
-                    return 'structures need repair {}'.format(target.structureType)
-
-    @staticmethod
-    def _should_be_harvester(creep):
-        if Worker._get_num_harvesters() < MIN_HARVESTERS:
-            return 'not enough harvesters'
-        else:
-            structures_in_room = creep.room.find(FIND_STRUCTURES)
-            if creep.memory.source:
-                target = Worker.get_closest_to_creep(
-                    creep,
-                    structures_in_room.filter(
-                        lambda s: s.hits < s.hitsMax / 2)
-                )
-                if target:
-                    creep.memory.target = target.id
-                    return False
-            if len(creep.room.find(FIND_CONSTRUCTION_SITES)) <= 0:
-                return 'no construction sites'
-
-    @staticmethod
-    def _become_builder(creep):
-        creep.memory.role = Builder.role
-        del creep.memory.target
-
-    @staticmethod
-    def _become_harvester(creep):
-        creep.memory.role = Harvester.role
-        del creep.memory.target
-
-    @staticmethod
-    def _get_source(creep):
-        # If we have a saved source, use it
-        if creep.memory.source:
-            source = Game.getObjectById(creep.memory.source)
-        if not source or not source.structureType == STRUCTURE_CONTAINER:
-            source = Miner.get_closest_to_creep(
-                creep,
-                creep.room.find(FIND_STRUCTURES).filter(
-                    lambda s: s.structureType == STRUCTURE_CONTAINER and s.store[RESOURCE_ENERGY] > creep.carryCapacity
-                ))
-            if not source:
-                # Get a random new source and save it
-                source = _.sample(creep.room.find(FIND_SOURCES))
-            creep.memory.source = source.id
-        return source
-
-    @staticmethod
-    def _harvest_source(creep, source):
-        if not source:
-            return
-        if source.structureType == STRUCTURE_CONTAINER:
-            res = creep.withdraw(source, RESOURCE_ENERGY)
-            if res == ERR_NOT_IN_RANGE:
-                creep.moveTo(source)
-            elif res == ERR_NOT_ENOUGH_ENERGY:
-                del creep.memory.source
-                Worker._get_source(creep)
-            elif res != OK:
-                console.log('{} cannot withdraw from {} {}'.format(creep.memory.role, source.structureType, res))
-
-        # If we're near the source, harvest it - otherwise, move to it.
-        else:
-            result = creep.harvest(source)
-            if result == ERR_NOT_IN_RANGE:
-                creep.moveTo(source)
-            elif result == ERR_NOT_ENOUGH_ENERGY:
-                return
-            elif result != OK:
-                console.log("[{}] Unknown result from creep.harvest({}): {}".format(creep.name, source, result))
-                del creep.memory.source
-
-    @staticmethod
-    def _transfer_energy(creep, target):
-        if Worker._is_close_to_target(creep, target):
-            # If we are targeting a spawn or extension, transfer energy. Otherwise, use upgradeController on it.
-            if target.energyCapacity:
-                Worker._transfer_energy_to_target(creep, target)
-            else:
-                Worker._upgrade_controller(creep, target)
-        else:
-            creep.moveTo(target)
-
-    @staticmethod
-    def _upgrade_controller(creep, target):
-        result = creep.upgradeController(target)
-        if result != OK:
-            console.log("[{}] Unknown result from creep.upgradeController({}): {}".format(
-                creep.name, target, result))
-            del creep.memory.target
-        # Let the creeps get a little bit closer than required to the controller, to make room for other creeps.
-        if not creep.pos.inRangeTo(target, 2):
-            creep.moveTo(target)
-
-    @staticmethod
-    def _transfer_energy_to_target(creep, target):
-        result = creep.transfer(target, RESOURCE_ENERGY)
-        if result == OK or result == ERR_NOT_IN_RANGE:
-            del creep.memory.target
-        else:
-            console.log("[{}] Unknown result from creep.transfer({}, {}): {}".format(
-                creep.name, target, RESOURCE_ENERGY, result))
-            del creep.memory.target
-
-    @staticmethod
-    def _is_close_to_target(creep, target):
-        # If we are targeting a spawn or extension, we need to be directly next to it - otherwise, we can be 3 away.
-        if target.energyCapacity:
-            return creep.pos.isNearTo(target)
-        else:
-            return creep.pos.inRangeTo(target, 3)
-
-    @staticmethod
-    def creep_empty(creep):
-        creep.memory.filling = True
-        del creep.memory.target
-
-    @staticmethod
-    def creep_full(creep):
-        creep.memory.filling = False
-
-    @staticmethod
-    def _is_creep_full(creep):
-        # If we're full, stop filling up and remove the saved source
-        if creep.memory.filling and _.sum(creep.carry) >= creep.carryCapacity:
-            return True
-
-    @staticmethod
-    def _is_creep_empty(creep):
-        # If we're empty, start filling again and remove the saved target
-        if not creep.memory.filling and creep.carry.energy <= 0:
-            return True
-
-    @staticmethod
-    def get_closest_to_creep(creep, obj_list):
-        least_distance = 1000
-        for r in obj_list:
-            distance_to_creep = r.pos.getRangeTo(creep.pos)
-            if distance_to_creep < least_distance:
-                least_distance = distance_to_creep
-                closest = r
-        return closest
+        self.create(body, spawn, Worker.role)
 
 
 class Builder(Worker):
@@ -228,7 +78,7 @@ class Builder(Worker):
             Harvester.run_creep(creep)
             return
 
-        Worker._pre_run_checks(creep)
+        _pre_run_checks(creep)
 
         if creep.memory.filling:
             Builder._harvest_source(creep, Builder._get_source(creep))
@@ -295,7 +145,7 @@ class Harvester(Worker):
             Builder.run_creep(creep)
             return
 
-        Worker._pre_run_checks(creep)
+        _pre_run_checks(creep)
 
         if creep.memory.filling:
             Harvester._harvest_source(creep, Harvester._get_source(creep))
@@ -356,10 +206,10 @@ class Miner(Harvester):
         Runs a creep as a generic harvester.
         :param creep: The creep to run
         """
-        if Miner._is_creep_full(creep):
-            Miner.creep_full(creep)
-        elif Miner._is_creep_empty(creep):
-            Miner.creep_empty(creep)
+        if _is_creep_full(creep):
+            creep_full(creep)
+        elif _is_creep_empty(creep):
+            creep_empty(creep)
         if creep.memory.filling:
             Miner._harvest_source(creep, Miner._get_source(creep))
         else:

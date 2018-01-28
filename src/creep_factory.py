@@ -20,7 +20,7 @@ MINER = worker.Miner.role
 
 def create_creep(creep_type, spawn, num_workers):
     if creep_type == WORKER:
-        worker.Worker.factory(spawn, num_workers)
+        factory(spawn, num_workers)
     if creep_type == SOLDIER:
         soldier.Soldier.factory(spawn, num_workers)
     if creep_type == MINER:

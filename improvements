@@ -1,6 +1,49 @@
 Job based creep scheduler
     - priority queues (could be multiple queues in memory or a big dict)
     - creeps have set roles, and dont switch, they are just assigned jobs
+Code Flow:
+main: invokes other processes
+    CreepFactory: checks if more creeps are required:
+        create creeps if necessary
+    JobController: scans for jobless creeps:
+        scheduler assigns jobs to relevant creep based on priority
+    CreepController: signals creeps to do work:
+        creeps perform their jobs, performing actions inline with tick
+        execution
+    MemoryController: provides uniform access to all memory.
+
+Memory structure
+Memory:
+    rooms: [list]
+        sources: [list]
+            id: dont expire - added when spawn built, and scout job
+                miner: if set HARVEST jobs arent assigned for this source
+                container: container that sits adjacent to this source
+        spawns: [list]
+            id: expired by creeps only when unfindable - added when built
+        storage: [list]
+            id: expired by creeps only when unfindable - added when built
+        controller:
+            id: doesnt expire
+            container: container adjacent to controller
+        last_job_scan: Game.time of last scan
+    creeps: [list]
+        name: {role}{number} reuse names, add only as necessary
+            role: permanent
+            job: added by scheduler - expired when complete
+                name:
+                source:
+                destination:
+                interruptable:
+                stage: set by job
+    jobs: list
+        name: REPAIR|BUILD|CARRY|MINE|HARVEST|UPGRADE
+        source:
+        destination:
+        interruptable:
+    config:
+        job_controller:
+            scan_interval: ticks between scans
 
 Creep Types
     - 3 Miner (nWORK 1CARRY 1MOVE) sits at resource, mines, empties into

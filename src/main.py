@@ -4,6 +4,7 @@ import creep_factory
 #  Game, etc. do exist.
 from controllers.creep_controller import CreepController
 from controllers.planner_controller import PlannerController
+from controllers.tower_controller import TowerController
 from defs import *
 
 # These are currently required for Transcrypt in order to use the following names in JavaScript.
@@ -24,11 +25,15 @@ def main():
     Main game logic loop.
     """
     # Perform Scheduled planning tasks
-    PlannerController.run()
+    #PlannerController.run()
     for creep_name in Object.keys(Memory.creeps):
         if not Object.keys(Game.creeps).includes(creep_name):
             del Game.creeps[creep_name]
 
+    # Run each tower
+    for room in Object.keys(Memory.rooms):
+        tower_controller = TowerController(room)
+        tower_controller.run_towers()
     # Run each spawn
     for name in Object.keys(Game.spawns):
         creep_factory.try_create_creep(Game.spawns[name])

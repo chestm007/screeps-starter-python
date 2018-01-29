@@ -106,15 +106,14 @@ class Worker(Creeps):
 
     @staticmethod
     def _get_source(creep):
+        if creep.memory.source:
+            source = Game.getObjectById(creep.memory.source)
         # If we have a saved source, use it
         source = _(creep.room.find(FIND_DROPPED_RESOURCES).filter(
             lambda r: r.resourceType == RESOURCE_ENERGY
         )).sample()
         if source:
             creep.memory.source = source.id
-            return source
-        if creep.memory.source:
-            source = Game.getObjectById(creep.memory.source)
         if not source:
             source = Miner.get_closest_to_creep(
                 creep,
@@ -184,7 +183,7 @@ class Worker(Creeps):
     @staticmethod
     def _transfer_energy_to_target(creep, target):
         result = creep.transfer(target, RESOURCE_ENERGY)
-        if result == OK or result == ERR_NOT_IN_RANGE:
+        if result == OK:
             del creep.memory.target
         else:
             console.log("[{}] Unknown result from creep.transfer({}, {}): {}".format(
@@ -342,10 +341,10 @@ class Miner(Harvester):
     role = 'miner'
 
     body_composition = {
-        'small': [WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE],
-        'medium': [WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE],
-        'large': [WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE],
-        'xlarge': [WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE]
+        'small': [WORK, WORK, WORK, WORK, WORK, MOVE],
+        'medium': [WORK, WORK, WORK, WORK, WORK, MOVE],
+        'large': [WORK, WORK, WORK, WORK, WORK, MOVE],
+        'xlarge': [WORK, WORK, WORK, WORK, WORK, MOVE]
     }
 
     @staticmethod
@@ -370,14 +369,15 @@ class Miner(Harvester):
         Runs a creep as a generic harvester.
         :param creep: The creep to run
         """
-        if Miner._is_creep_full(creep):
-            Miner.creep_full(creep)
-        elif Miner._is_creep_empty(creep):
-            Miner.creep_empty(creep)
-        if creep.memory.filling:
-            Miner._harvest_source(creep, Miner._get_source(creep))
-        else:
-            Miner._transfer_energy(creep, Miner._get_target(creep))
+        Miner._harvest_source(creep, Miner._get_source(creep))
+        creep.drop(RESOURCE_ENERGY)
+        #if Miner._is_creep_full(creep):
+        #    Miner.creep_full(creep)
+        #elif Miner._is_creep_empty(creep):
+        #    Miner.creep_empty(creep)
+        #if creep.memory.filling:
+        #else:
+        #    Miner._transfer_energy(creep, Miner._get_target(creep))
 
     @staticmethod
     def _get_target(creep):
@@ -402,7 +402,6 @@ class Miner(Harvester):
                 return s
 
         worked_sources = [Memory.creeps[creep].source for creep in Object.keys(Game.creeps) if Memory.creeps[creep].role == 'miner']
-        console.log(worked_sources)
         sources = creep.room.find(FIND_SOURCES).filter(
             lambda s: not worked_sources.includes(s.id)
         )
@@ -413,14 +412,12 @@ class Miner(Harvester):
 
     @staticmethod
     def _transfer_energy(creep, target):
-        if not target:
-            creep.drop(RESOURCE_ENERGY)
         res = creep.transfer(target, RESOURCE_ENERGY)
         if res == ERR_NOT_IN_RANGE:
             creep.moveTo(target)
         elif res == ERR_FULL:
             pass
-        elif res != OK:
+        elif res != OK and res != ERR_INVALID_TARGET:
             console.log('{} cant transfer to {} {}'.format(Miner.role, target, res))
 
     @staticmethod

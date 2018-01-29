@@ -44,7 +44,7 @@ class Worker(_Creep):
         self.memory.filling = True
         del self.memory.target
 
-    def _pre_run_checks(self):
+    def run_creep(self):
         if self._is_creep_empty():
             self.creep_empty()
         elif self._is_creep_full():
@@ -71,39 +71,9 @@ class Worker(_Creep):
 class Builder(Worker):
     role = 'builder'
 
-    @staticmethod
-    def run_creep(creep):
-        if Builder._should_be_harvester(creep):
-            Builder._become_harvester(creep)
-            Harvester.run_creep(creep)
-            return
-
-        _pre_run_checks(creep)
-
-        if creep.memory.filling:
-            Builder._harvest_source(creep, Builder._get_source(creep))
-
-        else:
-            target = Builder._get_target(creep)
-            if target:
-                target_obj = Game.getObjectById(creep.memory.target)
-                if target_obj.structureType == STRUCTURE_ROAD or target_obj.structureType == STRUCTURE_CONTAINER:
-                    if target_obj.hits >= target_obj.hitsMax / 3 * 2:
-                        del creep.memory.target
-                        Builder._get_target(creep)
-                    res = creep.repair(target)
-                    if res == ERR_NOT_IN_RANGE:
-                        creep.moveTo(target)
-                        return
-                    elif res == OK:
-                        return
-                res = creep.build(target)
-                if res == ERR_NOT_IN_RANGE:
-                    creep.moveTo(target)
-                    return
-                elif res == OK:
-                    return
-            del creep.memory.target
+    def run_creep(self):
+        super().run_creep()
+        self.job.run(self.creep)
 
     @staticmethod
     def _get_target(creep):

@@ -1,3 +1,4 @@
+from controllers.jobs import JobController
 from defs import *
 
 __pragma__('noalias', 'name')
@@ -24,6 +25,15 @@ class _Creep(Creep):
     }
 
     num_creep_to_size = ['small', 'small', 'medium', 'medium', 'large', 'xlarge']
+
+    def __init__(self, creep):
+        job = Memory.creeps[creep.name].job
+        self.job = (JobController.job_factory(job.name,
+                                              *[job.source,
+                                                job.destination,
+                                                job.interruptable,
+                                                job.stage]))
+        self.creep = creep
 
     def _calculate_creation_cost(self, body_composition):
         return sum([self.body_part_cost[part] for part in body_composition])

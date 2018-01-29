@@ -129,6 +129,7 @@ class Job:
         pass
 
     def _withdraw_from_container(self, creep):
+        if 
         if self.source.structureType == STRUCTURE_CONTAINER:
             res = creep.withdraw(self.source, RESOURCE_ENERGY)
             if res == ERR_NOT_IN_RANGE:

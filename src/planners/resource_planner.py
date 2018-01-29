@@ -21,7 +21,6 @@ class ResourcePlanner(object):
     @staticmethod
     def _run_spawn(spawn):
         ResourcePlanner._load_memory(spawn.room)
-        ResourcePlanner._scrub_memory(spawn)
 
     @staticmethod
     def _load_memory(room):
@@ -48,25 +47,3 @@ class ResourcePlanner(object):
                                      res.pos.y + y).lookFor(LOOK_TERRAIN) == 'wall':
                             wall_found += 1
                 Memory.rooms[room.name]['resources'][res.id]['harvest_spots'] = 9 - wall_found
-                if not Memory.rooms[room.name]['resources'][res.id]['miners']:
-                    Memory.rooms[room.name]['resources'][res.id]['miners'] = []
-
-    @staticmethod
-    def _scrub_memory(spawn):
-        for creep_name in Object.keys(Memory.creeps):
-            source = Memory.creeps[creep_name].source
-            role = Memory.creeps[creep_name].role
-            # if creep dead
-            if source:
-                if role == MINER:
-                    if not Object.keys(Game.creeps).includes(creep_name):
-                                if not Memory.rooms[spawn.room.name]['resources'][source]['miners']:
-                                    Memory.rooms[spawn.room.name]['resources'][source]['miners'] = []
-                    # if creep alive
-                    else:
-                        miners_on_source = len(Memory.rooms[spawn.room.name]['resources'][source]['miners'])
-                        harvest_spots = Memory.rooms[spawn.room.name]['resources'][source]['harvest_spots']
-                        if miners_on_source > harvest_spots:
-                            del Memory.creeps[creep_name].source
-                            Memory.rooms[spawn.room.name]['resources'][source]['miners'].pop(creep_name)
-

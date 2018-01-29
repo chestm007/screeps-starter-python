@@ -41,8 +41,11 @@ def try_create_creep(spawn):
             create_creep(WORKER, spawn, num_workers)
             return
 
-        num_miners = _.sum(Game.creeps, lambda c: c.pos.roomName == spawn.pos.roomName and
-                                                   (c.memory.role == MINER))
-        if num_miners < len(spawn.room.find(FIND_SOURCES)):
-            create_creep(MINER, spawn, num_miners)
+        if len(spawn.room.find(FIND_STRUCTURES).filter(
+            lambda s: s.structureType == STRUCTURE_CONTAINER
+        )) > 0:
+            num_miners = _.sum(Game.creeps, lambda c: c.pos.roomName == spawn.pos.roomName and
+                                                       (c.memory.role == MINER))
+            if num_miners < len(spawn.room.find(FIND_SOURCES)):
+                create_creep(MINER, spawn, num_miners)
 

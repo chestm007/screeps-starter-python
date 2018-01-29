@@ -20,4 +20,7 @@ class RangedSoldier(Soldier):
 
 
 class CombatSoldier(Soldier):
+    @staticmethod
+    def run_creep(creep):
+        hostile = _(Game.rooms.find(FIND_HOSTILE_CREEPS)).sample()
     pass

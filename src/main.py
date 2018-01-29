@@ -25,6 +25,9 @@ def main():
     """
     # Perform Scheduled planning tasks
     PlannerController.run()
+    for creep_name in Object.keys(Memory.creeps):
+        if not Object.keys(Game.creeps).includes(creep_name):
+            del Game.creeps[creep_name]
 
     # Run each spawn
     for name in Object.keys(Game.spawns):

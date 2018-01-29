@@ -107,9 +107,15 @@ class Worker(Creeps):
     @staticmethod
     def _get_source(creep):
         # If we have a saved source, use it
+        source = _(creep.room.find(FIND_DROPPED_RESOURCES).filter(
+            lambda r: r.resourceType == RESOURCE_ENERGY
+        )).sample()
+        if source:
+            creep.memory.source = source.id
+            return source
         if creep.memory.source:
             source = Game.getObjectById(creep.memory.source)
-        if not source or not source.structureType == STRUCTURE_CONTAINER:
+        if not source:
             source = Miner.get_closest_to_creep(
                 creep,
                 creep.room.find(FIND_STRUCTURES).filter(
@@ -117,7 +123,7 @@ class Worker(Creeps):
                 ))
             if not source:
                 # Get a random new source and save it
-                source = _.sample(creep.room.find(FIND_SOURCES))
+                source = creep.pos.findClosestByRange(FIND_SOURCES)
             creep.memory.source = source.id
         return source
 
@@ -127,6 +133,13 @@ class Worker(Creeps):
             return
         if source.structureType == STRUCTURE_CONTAINER:
             res = creep.withdraw(source, RESOURCE_ENERGY)
+            if res == ERR_NOT_IN_RANGE:
+                creep.moveTo(source)
+            elif res == ERR_NOT_ENOUGH_ENERGY:
+                del creep.memory.source
+                Worker._get_source(creep)
+        if source.resourceType == RESOURCE_ENERGY:
+            res = creep.pickup(source)
             if res == ERR_NOT_IN_RANGE:
                 creep.moveTo(source)
             elif res == ERR_NOT_ENOUGH_ENERGY:
@@ -194,6 +207,7 @@ class Worker(Creeps):
     @staticmethod
     def creep_full(creep):
         creep.memory.filling = False
+        del creep.memory.source
 
     @staticmethod
     def _is_creep_full(creep):
@@ -313,7 +327,7 @@ class Harvester(Worker):
             target = Worker.get_closest_to_creep(
                 creep,
                 structures_in_room.filter(
-                    lambda s: (s.structureType == STRUCTURE_EXTENSION or s.structureType == STRUCTURE_SPAWN)
+                    lambda s: (s.structureType == STRUCTURE_EXTENSION or s.structureType == STRUCTURE_SPAWN or s.structureType == STRUCTURE_TOWER)
                               and s.energy < s.energyCapacity
             ))
             if not target:
@@ -387,30 +401,20 @@ class Miner(Harvester):
             if not s.structureType == STRUCTURE_CONTAINER:
                 return s
 
-        sources = creep.room.find(FIND_SOURCES)
-        sources_w_space = []
-        for s in sources:
-            if not Memory.rooms:
-                return
-            this_source = Memory.rooms[creep.room.name].resources[s.id]
-            for c in Object.keys(Memory.rooms[creep.room.name].resources[s.id]['miners']):
-                if this_source['miners'][c] == creep.name:
-                    return s
-            miners_on_source = len(this_source.miners)
-            if miners_on_source >= this_source.harvest_spots:
-                pass
-            else:
-                sources_w_space.append(s)
-        source = Worker.get_closest_to_creep(creep, sources_w_space)
-        if source:
-            if not Memory.rooms[creep.room.name]['resources'][source.id]['miners']:
-                Memory.rooms[creep.room.name]['resources'][Source.id]['miners'] = []
-            Memory.rooms[creep.room.name].resources[source.id]['miners'].push(creep.name)
+        worked_sources = [Memory.creeps[creep].source for creep in Object.keys(Game.creeps) if Memory.creeps[creep].role == 'miner']
+        console.log(worked_sources)
+        sources = creep.room.find(FIND_SOURCES).filter(
+            lambda s: not worked_sources.includes(s.id)
+        )
+        if len(sources) > 0:
+            source = sources[0]
             creep.memory.source = source.id
             return source
 
     @staticmethod
     def _transfer_energy(creep, target):
+        if not target:
+            creep.drop(RESOURCE_ENERGY)
         res = creep.transfer(target, RESOURCE_ENERGY)
         if res == ERR_NOT_IN_RANGE:
             creep.moveTo(target)
@@ -418,3 +422,12 @@ class Miner(Harvester):
             pass
         elif res != OK:
             console.log('{} cant transfer to {} {}'.format(Miner.role, target, res))
+
+    @staticmethod
+    def creep_empty(creep):
+        creep.memory.filling = True
+        del creep.memory.target
+
+    @staticmethod
+    def creep_full(creep):
+        creep.memory.filling = False

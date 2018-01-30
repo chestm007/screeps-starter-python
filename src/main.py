@@ -28,12 +28,13 @@ def main():
     #PlannerController.run()
     for creep_name in Object.keys(Memory.creeps):
         if not Object.keys(Game.creeps).includes(creep_name):
-            del Game.creeps[creep_name]
+            del Memory.creeps[creep_name]
 
     # Run each tower
     for room in Object.keys(Memory.rooms):
         tower_controller = TowerController(room)
         tower_controller.run_towers()
+
     # Run each spawn
     for name in Object.keys(Game.spawns):
         creep_factory.try_create_creep(Game.spawns[name])

@@ -16,6 +16,7 @@ BUILDER = worker.Builder.role
 WORKER = worker.Worker.role
 SOLDIER = soldier.Soldier.role
 MINER = worker.Miner.role
+CARRIER = worker.Carrier.role
 
 
 def create_creep(creep_type, spawn, num_workers):
@@ -25,6 +26,8 @@ def create_creep(creep_type, spawn, num_workers):
         soldier.Soldier.factory(spawn, num_workers)
     if creep_type == MINER:
         worker.Miner.factory(spawn, num_workers)
+    if creep_type == CARRIER:
+        worker.Carrier.factory(spawn, num_workers)
 
 
 def try_create_creep(spawn):
@@ -45,4 +48,10 @@ def try_create_creep(spawn):
                                                    (c.memory.role == MINER))
         if num_miners < len(spawn.room.find(FIND_SOURCES)):
             create_creep(MINER, spawn, num_miners)
+
+        num_carriers = _.sum(Game.creeps, lambda c: c.pos.roomName == spawn.pos.roomName and
+                                                  (c.memory.role == CARRIER))
+
+        if num_carriers < num_miners:
+            create_creep(CARRIER, spawn, num_carriers)
 

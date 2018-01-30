@@ -20,8 +20,11 @@ class TowerController:
         self.damaged_structures = Game.rooms[self.room].find(FIND_STRUCTURES).filter(
             lambda s: s.hits < s.hitsMax
         )
+        self.hostile_creeps = Game.rooms[self.room].find(FIND_HOSTILE_CREEPS)
 
     def run_towers(self):
         for tower in self.towers:
-            if len(self.damaged_structures) > 0:
+            if len(self.hostile_creeps) > 0:
+                tower.attack(self.hostile_creeps[0])
+            elif len(self.damaged_structures) > 0:
                 tower.repair(self.damaged_structures[0])

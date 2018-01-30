@@ -15,7 +15,8 @@ class CreepController(object):
     creep_type_map = {
         worker.Harvester.role: worker.Harvester,
         worker.Builder.role: worker.Builder,
-        worker.Miner.role: worker.Miner
+        worker.Miner.role: worker.Miner,
+        worker.Carrier.role: worker.Carrier
     }
 
     creep_body_map = {
@@ -27,6 +28,10 @@ class CreepController(object):
         '.'.join(worker.Miner.body_composition['medium']): worker.Miner.role,
         '.'.join(worker.Miner.body_composition['large']): worker.Miner.role,
         '.'.join(worker.Miner.body_composition['xlarge']): worker.Miner.role,
+        '.'.join(worker.Carrier.body_composition['small']): worker.Carrier.role,
+        '.'.join(worker.Carrier.body_composition['medium']): worker.Carrier.role,
+        '.'.join(worker.Carrier.body_composition['large']): worker.Carrier.role,
+        '.'.join(worker.Carrier.body_composition['xlarge']): worker.Carrier.role,
     }
 
     @staticmethod

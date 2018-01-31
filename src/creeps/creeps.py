@@ -24,6 +24,7 @@ class Creeps(object):
     }
 
     num_creep_to_size = ['small', 'small', 'medium', 'medium', 'large', 'xlarge']
+
     @staticmethod
     def _calculate_creation_cost(body_composition):
         return sum([Creeps.body_part_cost[part] for part in body_composition])

@@ -16,7 +16,8 @@ class CreepController(object):
         worker.Harvester.role: worker.Harvester,
         worker.Builder.role: worker.Builder,
         worker.Miner.role: worker.Miner,
-        worker.Carrier.role: worker.Carrier
+        worker.Carrier.role: worker.Carrier,
+        worker.Claimer.role: worker.Claimer
     }
 
     creep_body_map = {

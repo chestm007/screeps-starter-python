@@ -16,9 +16,25 @@ class TowerController:
         self.towers = Game.rooms[self.room].find(FIND_MY_STRUCTURES).filter(
             lambda s: s.structureType == STRUCTURE_TOWER
         )
+        max_wall_hits = Memory.rooms[room].settings.max_wall_hits
+        if not max_wall_hits:
+            max_wall_hits = 30000
 
-        self.damaged_structures = Game.rooms[self.room].find(FIND_STRUCTURES).filter(
+        max_rampart_hits = Memory.rooms[room].settings.max_rampart_hits
+        if not max_rampart_hits:
+            max_rampart_hits = 30000
+        self.all_structures = Game.rooms[self.room].find(FIND_STRUCTURES)
+        self.damaged_structures = self.all_structures.filter(
             lambda s: s.hits < s.hitsMax
+            and s.structureType != STRUCTURE_WALL
+            and s.structureType != STRUCTURE_RAMPART
+
+        )
+        self.damaged_walls = self.all_structures.filter(
+            lambda s: s.structureType == STRUCTURE_WALL and s.hits < max_wall_hits
+        )
+        self.damaged_ramparts = self.all_structures.filter(
+            lambda s: s.structureType == STRUCTURE_RAMPART and s.hits < max_rampart_hits
         )
         self.hostile_creeps = Game.rooms[self.room].find(FIND_HOSTILE_CREEPS)
 
@@ -28,3 +44,7 @@ class TowerController:
                 tower.attack(self.hostile_creeps[0])
             elif len(self.damaged_structures) > 0:
                 tower.repair(self.damaged_structures[0])
+            elif len(self.damaged_walls) > 0:
+                tower.repair(self.damaged_walls[0])
+            elif len(self.damaged_ramparts) > 0:
+                tower.repair(self.damaged_ramparts[0])

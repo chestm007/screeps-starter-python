@@ -2,6 +2,7 @@ import creep_factory
 # defs is a package which claims to export all constants and some JavaScript objects, but in reality does
 #  nothing. This is useful mainly when using an editor like PyCharm, so that it 'knows' that things like Object, Creep,
 #  Game, etc. do exist.
+from Misc.query_cacher import Cache
 from controllers.creep_controller import CreepController
 from controllers.planner_controller import PlannerController
 from controllers.tower_controller import TowerController
@@ -24,28 +25,31 @@ def main():
     """
     Main game logic loop.
     """
+    cacher = Cache()
+    for creep_name in Object.keys(Game.creeps):
+        cacher.add_room_to_cache(Game.creeps[creep_name].room)
     if not Memory.rooms:
         Memory.rooms = {}
     # Perform Scheduled planning tasks
     #PlannerController.run()
+
+    # remove dead creeps from memory (we dont care about the dead!)
     for creep_name in Object.keys(Memory.creeps):
         if not Object.keys(Game.creeps).includes(creep_name):
             del Memory.creeps[creep_name]
 
-    # Run each spawn
+    # Run each spawn (replace dead creeps with moar minions)
     for name in Object.keys(Game.spawns):
         creep_factory.try_create_creep(Game.spawns[name])
 
-    # Run each tower
+    # Run each tower (shoot things and heal stuff)
     for room in Object.keys(Memory.rooms):
         tower_controller = TowerController(room)
         tower_controller.run_towers()
 
     # Run each creep
-    for name in Object.keys(Game.creeps):
-        CreepController.run_creep(Game.creeps[name])
-
-    for name in Object.keys(Game.creeps):
-        CreepController.say_role(Game.creeps[name])
+    creep_controller = CreepController(cacher)
+    creep_controller.run_creeps()
+    creep_controller.say_roles()
 
 module.exports.loop = main

@@ -2,6 +2,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 from .creep import Creep
 from .misc_obj import Flag, RoomObject
+from .other_js import List as list
 # noinspection PyProtectedMember
 from .room import Room, RoomPosition, _Owner
 from .structures import ConstructionSite, OwnedStructure, Structure, StructureSpawn

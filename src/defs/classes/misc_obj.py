@@ -1,6 +1,6 @@
 # noinspection PyPep8Naming
 from typing import Optional, Type, Union
-
+from .other_js import List as list
 from .memory import _Memory
 from .room import Room, RoomPosition
 from defs import constants
@@ -12,13 +12,19 @@ class RoomObject:
     :type room: Room
     """
 
-    def __init__(self, pos: RoomPosition, room: Room, structureType: constants, hits: int, hitsMax: int) -> None:
+    def __init__(self, pos: RoomPosition, room: Room, structureType: constants, hits: int, hitsMax: int,
+                 energy: int, energyCapacity: int, store: int, storeCapacity: int, id: str) -> None:
         """
         WARNING: This constructor is purely for type completion, and does not exist in the game.
         """
+        self.id = id
         self.pos = pos
         self.room = room
         self.structureType = structureType
+        self.energy = energy
+        self.energyCapacity = energyCapacity
+        self.store = store
+        self.storeCapacity = storeCapacity
         self.hits = hits
         self.hitsMax = hitsMax
 

@@ -23,6 +23,14 @@ class Creeps(object):
         CLAIM: 600
     }
 
+    def __init__(self, controller, creep):
+        self.creep = creep
+        self.controller = controller
+        self.structures_in_room = self.controller.cache.get_room_cache(creep.room).get_structures()
+        self.construction_sites_in_room = self.controller.cache.get_room_cache(creep.room).get_construction_sites()
+        self.resources_in_room = self.controller.cache.get_room_cache(creep.room).get_resources()
+        self.dropped_resources_in_room = self.controller.cache.get_room_cache(creep.room).get_dropped_resources()
+
     num_creep_to_size = ['small', 'small', 'medium', 'medium', 'large', 'xlarge']
 
     @staticmethod
@@ -34,28 +42,11 @@ class Creeps(object):
         pass
 
     @staticmethod
-    def _recycle_creep_name(role):
-        existing_creeps = []
-        for name in Object.keys(Game.creeps):
-            if name.startswith(role):
-                existing_creeps.append(name)
-            i = 0
-            while True:
-                new_name = '{}{}'.format(role, i)
-                if existing_creeps.includes(new_name):
-                    i += 1
-                else:
-                    creep_name = new_name
-                    break
-            return creep_name
-
-    @staticmethod
     def create(body, spawn, role):
         if body is None:
             console.log('Error creating {}: no defined body composition'.format(role))
         else:
             spawn.createCreep(body, None, {'role': role})
 
-    @staticmethod
-    def run_creep(creep):
-        console.log('cannot run undefined creep')
+    def run_creep(self):
+        console.log('cannot run undefined creep {}'.format(self.creep.name))

@@ -17,14 +17,20 @@ class CreepController(object):
         worker.Builder.role: worker.Builder,
         worker.Miner.role: worker.Miner,
         worker.Carrier.role: worker.Carrier,
-        worker.Claimer.role: worker.Claimer
+        worker.Claimer.role: worker.Claimer,
+        worker.RemoteMiner.role: worker.RemoteMiner,
+        worker.RemoteCarrier.role: worker.RemoteCarrier
     }
 
+    #'.'.join(worker..body_composition['small'] ): worker..role,
+    #'.'.join(worker..body_composition['medium']): worker..role,
+    #'.'.join(worker..body_composition['large'] ): worker..role,
+    #'.'.join(worker..body_composition['xlarge']): worker..role,
     creep_body_map = {
-        '.'.join(worker.Worker.body_composition['small']): 'harvester',
-        '.'.join(worker.Worker.body_composition['medium']): 'harvester',
-        '.'.join(worker.Worker.body_composition['large']): 'harvester',
-        '.'.join(worker.Worker.body_composition['xlarge']): 'harvester',
+        '.'.join(worker.Worker.body_composition['small']): worker.Harvester.role,
+        '.'.join(worker.Worker.body_composition['medium']): worker.Harvester.role,
+        '.'.join(worker.Worker.body_composition['large']): worker.Harvester.role,
+        '.'.join(worker.Worker.body_composition['xlarge']): worker.Harvester.role,
         '.'.join(worker.Miner.body_composition['small']): worker.Miner.role,
         '.'.join(worker.Miner.body_composition['medium']): worker.Miner.role,
         '.'.join(worker.Miner.body_composition['large']): worker.Miner.role,
@@ -33,26 +39,39 @@ class CreepController(object):
         '.'.join(worker.Carrier.body_composition['medium']): worker.Carrier.role,
         '.'.join(worker.Carrier.body_composition['large']): worker.Carrier.role,
         '.'.join(worker.Carrier.body_composition['xlarge']): worker.Carrier.role,
+        '.'.join(worker.RemoteMiner.body_composition['small']): worker.RemoteMiner.role,
+        '.'.join(worker.RemoteMiner.body_composition['medium']): worker.RemoteMiner.role,
+        '.'.join(worker.RemoteMiner.body_composition['large']): worker.RemoteMiner.role,
+        '.'.join(worker.RemoteMiner.body_composition['xlarge']): worker.RemoteMiner.role,
+        '.'.join(worker.RemoteCarrier.body_composition['large']): worker.RemoteCarrier.role,
     }
 
-    @staticmethod
-    def run_creep(creep):
-        creep_class = CreepController.get_creep_object_from_type(creep)
-        # if this creep is currently unclassified
-        if not creep_class:
-            creep_type = CreepController.creep_body_map['.'.join([i.type for i in creep.body])]
-            if not creep_type:
-                console.log('uncategorizable creep detected: {}'.format(creep.name))
-                return
-            creep.memory.role = creep_type
-            creep_class = CreepController.creep_type_map[creep.memory.role]
-        creep_class.run_creep(creep)
+    def __init__(self, cache):
+        self.creeps = []  # type: list(Creep, )
+        self.cache = cache
+        self.initialize_creeps()
 
-    @staticmethod
-    def get_creep_object_from_type(creep):
-        return CreepController.creep_type_map[creep.memory.role]
+    def initialize_creeps(self):
+        self.creeps = []
+        for name in Object.keys(Game.creeps):
+            creep = Game.creeps[name]
+            creep_class = self.get_creep_object_from_type(creep)
+            if not creep_class:
+                creep_type = self.creep_body_map['.'.join([i.type for i in creep.body])]
+                if not creep_type:
+                    console.log('uncategorizable creep detected: {}'.format(creep.name))
+                    return
+                creep.memory.role = creep_type
+            self.creeps.append(self.creep_type_map[creep.memory.role](self, creep))
 
-    @staticmethod
-    def say_role(creep):
-        creep.say(creep.memory.role)
+    def run_creeps(self):
+        for creep in self.creeps:
+            creep.run_creep()
+
+    def get_creep_object_from_type(self, creep):
+        return self.creep_type_map[creep.memory.role]
+
+    def say_roles(self):
+        for c in self.creeps:
+            c.creep.say(c.creep.memory.role)
 

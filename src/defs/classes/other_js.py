@@ -230,6 +230,11 @@ class Set(Generic[K]):
         return 0
 
 
+class List(list):
+    def filter(self) -> Iterable[K]:
+        pass
+
+
 Infinity = float('inf')
 
 undefined = None  # type: None

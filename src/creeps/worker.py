@@ -55,36 +55,36 @@ class Worker(Creeps):
         console.log('spawning new {} worker creep'.format(size))
         Creeps.create(body, spawn, Worker.role)
 
-    @staticmethod
-    def _pre_run_checks(creep):
-        if Worker._is_creep_empty(creep):
-            Worker.creep_empty(creep)
-        elif Worker._is_creep_full(creep):
-            Worker.creep_full(creep)
-        if not creep.memory.filling:
-            creep.memory.filling = False
+    def _pre_run_checks(self):
+        if self._is_creep_empty():
+            self.creep_empty()
+        elif self._is_creep_full():
+            self.creep_full()
+        if not self.creep.memory.filling:
+            self.creep.memory.filling = False
 
-    @staticmethod
-    def _get_num_harvesters(creep):
+    def _get_num_harvesters(self):
         return len([Game.creeps[name] for name in Object.keys(Game.creeps)
-                    if str(Game.creeps[name].memory.role) == Harvester.role and Game.creeps[name].room == creep.room])
+                    if str(Game.creeps[name].memory.role) == Harvester.role
+                    and Game.creeps[name].room == self.creep.room])
 
-    @staticmethod
-    def _should_be_builder(creep):
-        if Worker._get_num_harvesters(creep) >= 2:
-            if len(creep.room.find(FIND_CONSTRUCTION_SITES)) > 0:
+    def _should_be_builder(self):
+        if self._get_num_harvesters() >= 2:
+            if len(self.construction_sites_in_room) > 0:
                 return 'construction sites exist'
-            structures_in_room = creep.room.find(FIND_STRUCTURES)
-            if creep.memory.source:
-                target = Worker.get_closest_to_creep(
-                    creep,
-                    structures_in_room.filter(
-                        lambda s: s.hits < s.hitsMax / 2)
+            if self.creep.memory.source:
+                target = self.get_closest_to_creep(
+                    self.structures_in_room.filter(
+                        lambda s: s.hits < s.hitsMax / 2
+                        and s.structureType != STRUCTURE_RAMPART
+                        and s.structureType != STRUCTURE_WALL
+                    )
                 )
                 if target:
-                    creep.memory.target = target.id
+                    self.creep.memory.target = target.id
                     return 'structures need repair {}'.format(target.structureType)
-            claimers = [Game.creeps[creep] for creep in Object.keys(Game.creeps) if Game.creeps[creep].memory.role == Claimer.role]
+            claimers = [Game.creeps[creep] for creep in Object.keys(Game.creeps)
+                        if Game.creeps[creep].memory.role == Claimer.role]
 
             for claimer in claimers:
                 unbuilt_spawn = _(claimer.room.find(FIND_CONSTRUCTION_SITES).filter(
@@ -93,22 +93,23 @@ class Worker(Creeps):
                 if unbuilt_spawn:
                     return True
 
-    @staticmethod
-    def _should_be_harvester(creep):
-        if Worker._get_num_harvesters(creep) < 1:
+    def _should_be_harvester(self):
+        if self._get_num_harvesters() < 1:
             return 'not enough harvesters'
         else:
-            structures_in_room = creep.room.find(FIND_STRUCTURES)
-            if creep.memory.source:
-                target = Worker.get_closest_to_creep(
-                    creep,
-                    structures_in_room.filter(
-                        lambda s: s.hits < s.hitsMax / 2)
+            if self.creep.memory.source:
+                target = self.get_closest_to_creep(
+                    self.structures_in_room.filter(
+                        lambda s: s.hits < s.hitsMax / 2
+                        and s.structureType != STRUCTURE_WALL
+                        and s.structureType != STRUCTURE_RAMPART
+                    )
                 )
                 if target:
-                    creep.memory.target = target.id
+                    self.creep.memory.target = target.id
                     return False
-            claimers = [Game.creeps[creep] for creep in Object.keys(Game.creeps) if Game.creeps[creep].memory.role == Claimer.role]
+            claimers = [Game.creeps[creep] for creep in Object.keys(Game.creeps)
+                        if Game.creeps[creep].memory.role == Claimer.role]
 
             for claimer in claimers:
                 unbuilt_spawn = _(claimer.room.find(FIND_CONSTRUCTION_SITES).filter(
@@ -116,243 +117,235 @@ class Worker(Creeps):
                 )).sample()
                 if unbuilt_spawn:
                     return False
-            if len(creep.room.find(FIND_CONSTRUCTION_SITES)) <= 0:
+            if len(self.construction_sites_in_room) <= 0:
                 return 'no construction sites'
 
-    @staticmethod
-    def _become_builder(creep):
-        creep.memory.role = Builder.role
-        del creep.memory.target
+    def _become_builder(self):
+        self.creep.memory.role = Builder.role
+        del self.creep.memory.target
 
-    @staticmethod
-    def _become_harvester(creep):
-        creep.memory.role = Harvester.role
-        del creep.memory.target
+    def _become_harvester(self):
+        self.creep.memory.role = Harvester.role
+        del self.creep.memory.target
 
-    @staticmethod
-    def _get_source(creep):
-        if creep.memory.source:
-            source = Game.getObjectById(creep.memory.source)
+    def _get_source(self):
+        source = None
+        if self.creep.memory.source:
+            source = Game.getObjectById(self.creep.memory.source)
             if source:
                 if source.energyCapacity:
                     if source.energy <= 0:
-                        del creep.memory.source
+                        del self.creep.memory.source
         if not source:
             containers = [Memory.creeps[creep].source_container for creep in Object.keys(Game.creeps)]
-            source = Worker.get_closest_to_creep(creep, creep.room.find(FIND_STRUCTURES).filter(
-                lambda s: (s.structureType == STRUCTURE_CONTAINER or s.structureType == STRUCTURE_STORAGE)
-                and not containers.includes(s.id)
-                and s.store[RESOURCE_ENERGY] > creep.carryCapacity * 2
-            ))
+            source = self.get_closest_to_creep(
+                self.structures_in_room.filter(
+                    lambda s: (s.structureType == STRUCTURE_CONTAINER or s.structureType == STRUCTURE_STORAGE)
+                    and not containers.includes(s.id)
+                    and s.store[RESOURCE_ENERGY] > self.creep.carryCapacity * 2
+                ))
             if source:
-                creep.memory.source = source.id
+                self.creep.memory.source = source.id
         if not source:
-            source = _(creep.room.find(FIND_DROPPED_RESOURCES).filter(
+            source = _(self.dropped_resources_in_room.filter(
                 lambda r: r.resourceType == RESOURCE_ENERGY
             )).sample()
         if source:
-            creep.memory.source = source.id
+            self.creep.memory.source = source.id
         if not source:
-            if creep.room.storage:
-                source = creep.room.storage
-                creep.memory.source = source.id
+            if self.creep.room.storage:
+                source = self.creep.room.storage
+                self.creep.memory.source = source.id
             if not source:
-                source = Miner.get_closest_to_creep(
-                    creep,
-                    creep.room.find(FIND_STRUCTURES).filter(
-                        lambda s: s.structureType == STRUCTURE_CONTAINER and s.store[RESOURCE_ENERGY] > creep.carryCapacity
+                source = self.get_closest_to_creep(
+                    self.structures_in_room.filter(
+                        lambda s: s.structureType == STRUCTURE_CONTAINER
+                        and s.store[RESOURCE_ENERGY] > self.creep.carryCapacity
                     ))
             if not source:
                 # Get a random new source and save it
-                source = _(creep.room.find(FIND_SOURCES).filter(
+                source = _(self.creep.room.find(FIND_SOURCES).filter(
                     lambda s: s.energy > 0
                 )).sample()
                 if source:
-                    creep.memory.source = source.id
+                    self.creep.memory.source = source.id
         return source
 
-    @staticmethod
-    def _harvest_source(creep, source):
+    def _harvest_source(self, source):
         if not source:
-            del creep.memory.source
+            del self.creep.memory.source
             return
         if source.structureType == STRUCTURE_CONTAINER or source.structureType == STRUCTURE_STORAGE:
-            res = creep.withdraw(source, RESOURCE_ENERGY)
+            res = self.creep.withdraw(source, RESOURCE_ENERGY)
             if res == ERR_NOT_IN_RANGE:
-                creep.moveTo(source)
+                self.creep.moveTo(source)
             elif res == ERR_NOT_ENOUGH_ENERGY or ERR_NOT_ENOUGH_RESOURCES:
-                del creep.memory.source
-                Worker._get_source(creep)
+                del self.creep.memory.source
+                self._get_source()
         else:
             if source.resourceType == RESOURCE_ENERGY:
-                res = creep.pickup(source)
+                res = self.creep.pickup(source)
                 if res == ERR_NOT_IN_RANGE:
-                    creep.moveTo(source)
+                    self.creep.moveTo(source)
                 elif res == ERR_NOT_ENOUGH_ENERGY:
-                    del creep.memory.source
-                    Worker._get_source(creep)
+                    del self.creep.memory.source
+                    self._get_source()
                 elif res == ERR_BUSY:
                     pass
                 elif res != OK:
-                    console.log('{} cannot withdraw from {} {}'.format(creep.memory.role, source.structureType, res))
+                    console.log('{} cannot withdraw from {} {}'
+                                .format(self.creep.memory.role, source.structureType, res))
                 return res
 
             # If we're near the source, harvest it - otherwise, move to it.
             else:
-                result = creep.harvest(source)
+                result = self.creep.harvest(source)
                 if result == ERR_NOT_IN_RANGE:
-                    creep.moveTo(source)
+                    self.creep.moveTo(source)
                 elif result == ERR_NOT_ENOUGH_ENERGY:
                     return
                 elif result != OK:
-                    console.log("[{}] Unknown result from creep.harvest({}): {}".format(creep.name, source, result))
-                    del creep.memory.source
+                    console.log("[{}] Unknown result from creep.harvest({}): {}"
+                                .format(self.creep.name, source, result))
+                    del self.creep.memory.source
                 return result
 
-    @staticmethod
-    def _transfer_energy(creep, target):
-        if Worker._is_close_to_target(creep, target):
+    def _transfer_energy(self, target):
+        if self._is_close_to_target(target):
             # If we are targeting a spawn or extension, transfer energy. Otherwise, use upgradeController on it.
             if target.energyCapacity:
-                Worker._transfer_energy_to_target(creep, target)
+                self._transfer_energy_to_target(target)
             else:
-                Worker._upgrade_controller(creep, target)
+                self._upgrade_controller(target)
         else:
-            creep.moveTo(target)
+            self.creep.moveTo(target)
 
-    @staticmethod
-    def _upgrade_controller(creep, target):
-        creep.upgradeController(target)
-        if not creep.pos.inRangeTo(target, 2):
-            creep.moveTo(target)
+    def _upgrade_controller(self, target):
+        self.creep.upgradeController(target)
+        if not self.creep.pos.inRangeTo(target, 2):
+            self.creep.moveTo(target)
 
-    @staticmethod
-    def _transfer_energy_to_target(creep, target):
-        result = creep.transfer(target, RESOURCE_ENERGY)
+    def _transfer_energy_to_target(self, target):
+        result = self.creep.transfer(target, RESOURCE_ENERGY)
         if result == OK:
-            del creep.memory.target
+            del self.creep.memory.target
         elif result == ERR_NOT_IN_RANGE:
-            creep.moveTo(target)
+            self.creep.moveTo(target)
         elif result == ERR_FULL:
-            del creep.memory.target
+            del self.creep.memory.target
         elif result == ERR_INVALID_TARGET:
-            del creep.memory.target
+            del self.creep.memory.target
         else:
             console.log("[{}] Unknown result from creep.transfer({}, {}): {}".format(
-                creep.name, target, RESOURCE_ENERGY, result))
-            del creep.memory.target
+                self.creep.name, target, RESOURCE_ENERGY, result))
+            del self.creep.memory.target
         return result
 
-    @staticmethod
-    def _is_close_to_target(creep, target):
+    def _is_close_to_target(self, target):
         # If we are targeting a spawn or extension, we need to be directly next to it - otherwise, we can be 3 away.
-        if target.energyCapacity:
-            return creep.pos.isNearTo(target)
-        else:
-            return creep.pos.inRangeTo(target, 3)
+        if target:
+            if target.energyCapacity:
+                return self.creep.pos.isNearTo(target)
+            else:
+                return self.creep.pos.inRangeTo(target, 3)
 
-    @staticmethod
-    def creep_empty(creep):
-        creep.memory.filling = True
-        del creep.memory.target
+    def creep_empty(self):
+        self.creep.memory.filling = True
+        del self.creep.memory.target
 
-    @staticmethod
-    def creep_full(creep):
-        creep.memory.filling = False
-        del creep.memory.source
+    def creep_full(self):
+        self.creep.memory.filling = False
+        del self.creep.memory.source
 
-    @staticmethod
-    def _is_creep_full(creep):
+    def _is_creep_full(self):
         # If we're full, stop filling up and remove the saved source
-        if creep.memory.filling and _.sum(creep.carry) >= creep.carryCapacity:
+        if self.creep.memory.filling and _.sum(self.creep.carry) >= self.creep.carryCapacity:
             return True
 
-    @staticmethod
-    def _is_creep_empty(creep):
+    def _is_creep_empty(self):
         # If we're empty, start filling again and remove the saved target
-        if not creep.memory.filling and creep.carry.energy <= 0:
+        if not self.creep.memory.filling and self.creep.carry.energy <= 0:
             return True
 
-    @staticmethod
-    def get_closest_to_creep(creep, obj_list):
+    def get_closest_to_creep(self, obj_list):
+        closest = None
         least_distance = 1000
         for r in obj_list:
-            distance_to_creep = r.pos.getRangeTo(creep.pos)
+            distance_to_creep = r.pos.getRangeTo(self.creep.pos)
             if distance_to_creep < least_distance:
                 least_distance = distance_to_creep
                 closest = r
         return closest
 
+    def _get_target(self) -> RoomObject:
+        pass
+
 
 class Builder(Worker):
     role = 'builder'
 
-    @staticmethod
-    def run_creep(creep):
-        if Builder._should_be_harvester(creep):
-            Builder._become_harvester(creep)
-            Harvester.run_creep(creep)
+    def run_creep(self):
+        if self._should_be_harvester():
+            self._become_harvester()
+            Harvester.run_creep(self)
             return
 
-        Worker._pre_run_checks(creep)
+        self._pre_run_checks()
 
-        if creep.memory.filling:
-            Builder._harvest_source(creep, Builder._get_source(creep))
+        if self.creep.memory.filling:
+            self._harvest_source(self._get_source())
 
         else:
-            target = Builder._get_target(creep)
+            target = self._get_target()
             if target:
                 if not target:
-                    del creep.memory.target
+                    del self.creep.memory.target
                     return
                 if target.structureType == STRUCTURE_ROAD or target.structureType == STRUCTURE_CONTAINER:
                     if target.hits >= target.hitsMax / 3 * 2:
-                        del creep.memory.target
-                        Builder._get_target(creep)
-                    res = creep.repair(target)
+                        del self.creep.memory.target
+                        self._get_target()
+                    res = self.creep.repair(target)
                     if res == ERR_NOT_IN_RANGE:
-                        creep.moveTo(target)
+                        self.creep.moveTo(target)
                         return
                     elif res == OK:
                         return
-                res = creep.build(target)
+                res = self.creep.build(target)
                 if res == ERR_NOT_IN_RANGE:
-                    creep.moveTo(target)
+                    self.creep.moveTo(target)
                     return
                 elif res == OK:
                     return
-            del creep.memory.target
+            del self.creep.memory.target
 
-    @staticmethod
-    def _get_target(creep):
-        if creep.memory.target:
-            target = Game.getObjectById(creep.memory.target)
+    def _get_target(self):
+        target = None
+        if self.creep.memory.target:
+            target = Game.getObjectById(self.creep.memory.target)
         else:
-            structures_in_room = creep.room.find(FIND_STRUCTURES)
-            if creep.memory.source:
-                target = Worker.get_closest_to_creep(
-                    creep,
-                    structures_in_room.filter(lambda s: s.hits < s.hitsMax / 2)
+            if self.creep.memory.source:
+                target = self.get_closest_to_creep(
+                    self.structures_in_room.filter(lambda s: s.hits < s.hitsMax / 2)
                 )
             if not target:
-                construction_sites = creep.room.find(FIND_CONSTRUCTION_SITES)
-                target = Worker.get_closest_to_creep(
-                    creep,
-                    construction_sites.filter(
+                target = self.get_closest_to_creep(
+                    self.construction_sites_in_room.filter(
                         lambda s: s.structureType == STRUCTURE_ROAD
                     )
                 )
                 if not target:
-                    target = creep.pos.findClosestByRange(FIND_CONSTRUCTION_SITES)
+                    target = self.creep.pos.findClosestByRange(FIND_CONSTRUCTION_SITES)
             if target:
-                creep.memory.target = target.id
-            claimers = [Game.creeps[creep] for creep in Object.keys(Game.creeps) if Game.creeps[creep].memory.role == Claimer.role]
+                self.creep.memory.target = target.id
+            claimers = [Game.creeps[creep] for creep in Object.keys(Game.creeps)
+                        if Game.creeps[creep].memory.role == Claimer.role]
             for claimer in claimers:
                 unbuilt_spawn = _(claimer.room.find(FIND_CONSTRUCTION_SITES).filter(
                     lambda s: s.structureType == STRUCTURE_SPAWN
                 )).sample()
                 if unbuilt_spawn:
-                    creep.memory.target = unbuilt_spawn.id
+                    self.creep.memory.target = unbuilt_spawn.id
                     return unbuilt_spawn
         return target
 
@@ -360,44 +353,46 @@ class Builder(Worker):
 class Harvester(Worker):
     role = 'harvester'
 
-    @staticmethod
-    def run_creep(creep):
+    def run_creep(self):
         """
         Runs a creep as a generic harvester.
-        :param creep: The creep to run
         """
-        if Harvester._should_be_builder(creep):
-            Harvester._become_builder(creep)
-            Builder.run_creep(creep)
+        if self._should_be_builder():
+            self._become_builder()
+            Builder.run_creep(self)
             return
 
-        Worker._pre_run_checks(creep)
+        self._pre_run_checks()
 
-        if creep.memory.filling:
-            Harvester._harvest_source(creep, Harvester._get_source(creep))
+        if self.creep.memory.filling:
+            self._harvest_source(self._get_source())
         else:
-            Harvester._transfer_energy(creep, Harvester._get_target(creep))
+            self._transfer_energy(self._get_target())
 
-    @staticmethod
-    def _get_target(creep):
+    def _get_target(self):
+        target = None
         # If we have a saved target, use it
-        if creep.memory.target:
-            target = Game.getObjectById(creep.memory.target)
+        if self.creep.memory.target:
+            target = Game.getObjectById(self.creep.memory.target)
         else:
-            structures_in_room = creep.room.find(FIND_STRUCTURES)
             # fill extentions and spawns first
-            if len([creep for creep in Object.keys(Game.creeps) if Game.creeps[creep].memory.role == Carrier.role]) <= 0:
-                target = Worker.get_closest_to_creep(
-                    creep,
-                    structures_in_room.filter(
-                        lambda s: (s.structureType == STRUCTURE_EXTENSION or s.structureType == STRUCTURE_SPAWN or s.structureType == STRUCTURE_TOWER)
-                                  and s.energy < s.energyCapacity
-                ))
+            if len([creep for creep in Object.keys(Game.creeps)
+                    if Game.creeps[creep].memory.role == Carrier.role]) <= 0:
+                target = self.get_closest_to_creep(
+                    self.structures_in_room.filter(
+                        lambda s: (
+                                      s.structureType == STRUCTURE_EXTENSION
+                                      or s.structureType == STRUCTURE_SPAWN
+                                      or s.structureType == STRUCTURE_TOWER
+                                  ) and s.energy < s.energyCapacity
+                    ))
             if not target:
                 # Get a random new target.
-                target = _(structures_in_room).filter(lambda s: s.structureType == STRUCTURE_CONTROLLER).sample()
+                target = _(self.structures_in_room).filter(
+                    lambda s: s.structureType == STRUCTURE_CONTROLLER
+                ).sample()
             if target:
-                creep.memory.target = target.id
+                self.creep.memory.target = target.id
         return target
 
 
@@ -413,7 +408,6 @@ class Miner(Harvester):
 
     @staticmethod
     def factory(spawn, num_workers):
-        body = None
         i = 0
         num_workers = 5
         while True:
@@ -428,84 +422,71 @@ class Miner(Harvester):
             console.log('spawning new {} worker creep'.format(size))
             Creeps.create(body, spawn, Miner.role)
 
-    @staticmethod
-    def run_creep(creep):
+    def run_creep(self):
         """
         Runs a creep as a generic harvester.
         :param creep: The creep to run
         """
-        source = Miner._get_source(creep)
-        if not creep.memory.on_source_container:
-            creep.moveTo(Game.getObjectById(creep.memory.source_container))
-        if len(creep.pos.lookFor(STRUCTURE_CONTAINER)) > 0:
-            creep.memory.on_source_container = True
+        source = self._get_source()
+        if not self.creep.memory.on_source_container:
+            self.creep.moveTo(Game.getObjectById(self.creep.memory.source_container))
+        if len(self.creep.pos.lookFor(STRUCTURE_CONTAINER)) > 0:
+            self.creep.memory.on_source_container = True
         else:
-            creep.harvest(source)
-            creep.drop(RESOURCE_ENERGY)
+            self.creep.harvest(source)
+            self.creep.drop(RESOURCE_ENERGY)
 
-        #if Miner._is_creep_full(creep):
-        #    Miner.creep_full(creep)
-        #elif Miner._is_creep_empty(creep):
-        #    Miner.creep_empty(creep)
-        #if creep.memory.filling:
-        #else:
-        #    Miner._transfer_energy(creep, Miner._get_target(creep))
-
-    @staticmethod
-    def _get_target(creep):
-        if creep.memory.target:
-            target = Game.getObjectById(creep.memory.target)
+    def _get_target(self):
+        if self.creep.memory.target:
+            target = Game.getObjectById(self.creep.memory.target)
         else:
-            target = Miner.get_closest_to_creep(
-                creep,
-                creep.room.find(FIND_STRUCTURES).filter(
+            target = self.get_closest_to_creep(
+                self.structures_in_room.filter(
                     lambda s: s.structureType == STRUCTURE_CONTAINER
                 ))
             if target:
-                creep.memory.target = target.id
+                self.creep.memory.target = target.id
         return target
 
-    @staticmethod
-    def _get_source(creep):
-        source = creep.memory.source
+    def _get_source(self):
+        source_container = None
+        source = self.creep.memory.source
         if source:
             s = Game.getObjectById(source)
             if not s.structureType == STRUCTURE_CONTAINER:
                 return s
 
-        worked_sources = [Memory.creeps[creep].source for creep in Object.keys(Game.creeps) if Memory.creeps[creep].role == 'miner']
-        sources = creep.room.find(FIND_SOURCES).filter(
-            lambda s: not worked_sources.includes(s.id)
+        worked_sources = [Memory.creeps[creep].source for creep in Object.keys(Game.creeps)
+                          if Memory.creeps[creep].role == 'miner']
+        sources = self.resources_in_room.filter(
+            lambda src: not worked_sources.includes(src.id)
         )
         if len(sources) > 0:
             source = sources[0]
             containers = source.pos.findInRange(FIND_STRUCTURES, 2).filter(
-                lambda s: s.structureType == STRUCTURE_CONTAINER
+                lambda struct: struct.structureType == STRUCTURE_CONTAINER
             )
             if len(containers) > 0:
                 source_container = containers[0]
-            creep.memory.source = source.id
-            creep.memory.source_container = source_container.id
+            self.creep.memory.source = source.id
+            self.creep.memory.source_container = source_container.id
             return source
 
-    @staticmethod
-    def _transfer_energy(creep, target):
-        res = creep.transfer(target, RESOURCE_ENERGY)
+    def _transfer_energy(self, target):
+        res = self.creep.transfer(target, RESOURCE_ENERGY)
         if res == ERR_NOT_IN_RANGE:
-            creep.moveTo(target)
+            self.creep.moveTo(target)
         elif res == ERR_FULL:
             pass
         elif res != OK and res != ERR_INVALID_TARGET:
-            console.log('{} cant transfer to {} {}'.format(Miner.role, target, res))
+            console.log('{} cant transfer to {} {}'.format(self.role, target, res))
 
-    @staticmethod
-    def creep_empty(creep):
-        creep.memory.filling = True
-        del creep.memory.target
+    def creep_empty(self):
+        self.creep.memory.filling = True
+        del self.creep.memory.target
 
-    @staticmethod
-    def creep_full(creep):
-        creep.memory.filling = False
+    def creep_full(self):
+        self.creep.memory.filling = False
 
 
 class Carrier(Worker):
@@ -530,7 +511,6 @@ class Carrier(Worker):
 
     @staticmethod
     def factory(spawn, num_workers):
-        body = None
         i = 0
         if num_workers > 4:
             num_workers = 4
@@ -546,68 +526,82 @@ class Carrier(Worker):
         console.log('spawning new {} worker creep'.format(size))
         Creeps.create(body, spawn, Carrier.role)
 
-    @staticmethod
-    def run_creep(creep):
-        if _.sum(creep.carry) <= 0:
-            creep.memory.filling = True
+    def run_creep(self):
+        source = None
+        if _.sum(self.creep.carry) <= 0:
+            self.creep.memory.filling = True
         else:
-            creep.memory.filling = False
-            del creep.memory.source
-        if creep.memory.source:
-            source = Game.getObjectById(creep.memory.source)
+            self.creep.memory.filling = False
+            del self.creep.memory.source
+        if self.creep.memory.source:
+            source = Game.getObjectById(self.creep.memory.source)
             if source and source.structureType == STRUCTURE_STORAGE:
-                del creep.memory.source
+                del self.creep.memory.source
         else:
-            miner_containers = [Game.getObjectById(Memory.creeps[miner].source_container) for miner in Object.keys(Game.creeps) if Memory.creeps[miner].role == 'miner' and Game.creeps[miner].room == creep.room]
-            miner_containers = [container for container in miner_containers if container and container.store[RESOURCE_ENERGY] > creep.carryCapacity * 2]
+            miner_containers = [
+                Game.getObjectById(Memory.creeps[miner].source_container)
+                for miner in Object.keys(Game.creeps)
+                if Memory.creeps[miner].role == 'miner' and Game.creeps[miner].room == self.creep.room]
+
+            miner_containers = [
+                container for container in miner_containers
+                if container
+                and container.store[RESOURCE_ENERGY] > self.creep.carryCapacity * 2]
+
             if not source:
-                source = _(creep.room.find(FIND_DROPPED_RESOURCES).filter(
-                    lambda r: r.resourceType == RESOURCE_ENERGY and r.amount >= creep.carryCapacity
+                source = _(self.dropped_resources_in_room.filter(
+                    lambda r: r.resourceType == RESOURCE_ENERGY and r.amount >= self.creep.carryCapacity
                 )).sample()
             if source:
-                creep.memory.source = source.id
+                self.creep.memory.source = source.id
             if miner_containers:
                 source = reversed(sorted(miner_containers, lambda c: c.store[RESOURCE_ENERGY]))[0]
                 if source:
-                    creep.memory.source = source.id
+                    self.creep.memory.source = source.id
             if not source:
-                source = creep.room.storage
+                source = self.creep.room.storage
                 if source:
-                    creep.memory.source = source.id
-        if creep.memory.filling:
-            res = Carrier._harvest_source(creep, source)
+                    self.creep.memory.source = source.id
+        if self.creep.memory.filling:
+            if source:
+                dropped_energy = source.pos.lookFor(RESOURCE_ENERGY)
+                if len(dropped_energy) > 0:
+                    self.creep.pickup(dropped_energy[0])
+            self._harvest_source(source)
         else:
-            res = Carrier._transfer_energy_to_target(creep, Carrier._get_target(creep))
+            res = self._transfer_energy_to_target(self._get_target())
             if res == ERR_FULL or res == ERR_INVALID_TARGET:
-                del creep.memory.target
+                del self.creep.memory.target
 
-    @staticmethod
-    def _get_target(creep):
-        if creep.memory.target:
-            return Game.getObjectById(creep.memory.target)
-        structures_in_room = creep.room.find(FIND_STRUCTURES)
-        target = Worker.get_closest_to_creep(
-            creep,
-            structures_in_room.filter(
-                lambda s: (s.structureType == STRUCTURE_EXTENSION or s.structureType == STRUCTURE_SPAWN or s.structureType == STRUCTURE_TOWER)
-                          and s.energy < s.energyCapacity
+    def _get_target(self):
+        if self.creep.memory.target:
+            return Game.getObjectById(self.creep.memory.target)
+        target = self.get_closest_to_creep(
+            self.structures_in_room.filter(
+                lambda s: (
+                              s.structureType == STRUCTURE_EXTENSION
+                              or s.structureType == STRUCTURE_SPAWN
+                              or s.structureType == STRUCTURE_TOWER
+                          ) and s.energy < s.energyCapacity
             ))
         if target:
-            creep.memory.target = target.id
+            self.creep.memory.target = target.id
             return target
         containers = [Memory.creeps[creep].source_container for creep in Object.keys(Game.creeps)]
-        unmined_containers = structures_in_room.filter(
+        unmined_containers = self.structures_in_room.filter(
             lambda s: (s.structureType == STRUCTURE_CONTAINER or s.structureType == STRUCTURE_STORAGE)
                       and not containers.includes(s.id) and s.store[RESOURCE_ENERGY] < s.storeCapacity*0.7
         )
         if unmined_containers:
-            target = sorted(unmined_containers, lambda c: c.storeCapacity / c.store[RESOURCE_ENERGY] and c.store[RESOURCE_ENERGY] < c.storeCapacity *0.9)[0]
+            target = sorted(unmined_containers,
+                            lambda c: c.storeCapacity / c.store[RESOURCE_ENERGY]
+                            and c.store[RESOURCE_ENERGY] < c.storeCapacity * 0.9)[0]
             if target:
-                creep.memory.target = target.id
+                self.creep.memory.target = target.id
                 return target
-        target = Game.creeps[creep.name].room.storage
+        target = Game.creeps[self.creep.name].room.storage
         if target:
-            creep.memory.target = target.id
+            self.creep.memory.target = target.id
             return target
 
 
@@ -615,37 +609,193 @@ class Claimer(Worker):
     role = 'claimer'
 
     body_composition = {
-        'small': [CLAIM, MOVE, MOVE, MOVE]
+        'small': [CLAIM, CLAIM, MOVE, MOVE]
     }
 
     @staticmethod
     def factory(spawn, num_workers):
-        body = None
-        i = 0
-        while True:
-            size = 'small'
-            if spawn.room.energyAvailable >= Claimer._calculate_creation_cost(Claimer.body_composition[size]):
-                body = Claimer.body_composition[size]
-                break
-            i += 1
+        size = 'small'
+        if spawn.room.energyAvailable >= Claimer._calculate_creation_cost(Claimer.body_composition[size]):
+            body = Claimer.body_composition[size]
 
         console.log('spawning new {} worker creep'.format(size))
         Creeps.create(body, spawn, Claimer.role)
 
-    @staticmethod
-    def run_creep(creep):
+    def run_creep(self):
         for flag in Object.keys(Game.flags):
-            if not Game.flags[flag].room:
-                creep.moveTo(Game.flags[flag].pos)
-            else:
-                if Game.flags[flag].room.controller:
-                    if creep.memory.target:
-                        controller = Game.getObjectById(creep.memory.target)
-                    else:
-                        controller = Game.flags[flag].room.controller
-                        creep.memory.target = controller.id
+            if str(flag).startswith('claim'):
+                if not Game.flags[flag].room:
+                    self.creep.moveTo(Game.flags[flag].pos)
+                else:
+                    if Game.flags[flag].room.controller:
+                        if self.creep.memory.target:
+                            controller = Game.getObjectById(self.creep.memory.target)
+                        else:
+                            controller = Game.flags[flag].room.controller
+                            self.creep.memory.target = controller.id
 
-                    if creep.claimController(controller) != OK:
-                        creep.moveTo(controller)
-                        creep.claimController(controller)
+                        if self.creep.claimController(controller) != OK:
+                            self.creep.moveTo(controller)
+                            self.creep.claimController(controller)
+                            self.creep.reserveController(controller)
+
+
+class RemoteMiner(Worker):
+    role = 'remote_miner'
+
+    body_composition = {
+        'small': [WORK, WORK, CARRY, MOVE],
+        'medium': [WORK, WORK, WORK, CARRY, MOVE],
+        'large': [WORK, WORK, WORK, CARRY, MOVE],
+        'xlarge': [WORK, WORK, WORK,
+                   CARRY, CARRY, CARRY, CARRY, CARRY,
+                   CARRY, CARRY, CARRY, CARRY, CARRY,
+                   MOVE],
+    }
+
+    @staticmethod
+    def factory(spawn, num_workers):
+        i = 0
+        num_workers = 5
+        while True:
+            size = RemoteMiner.num_creep_to_size[num_workers - i]
+            if not size:
+                return
+            if spawn.room.energyAvailable >= RemoteMiner._calculate_creation_cost(RemoteMiner.body_composition[size]):
+                body = RemoteMiner.body_composition[size]
+                break
+            i += 1
+        if body:
+            console.log('spawning new {} worker creep'.format(size))
+            Creeps.create(body, spawn, RemoteMiner.role)
+
+    def run_creep(self):
+        """
+        Runs a creep as a generic harvester.
+        :param creep: The creep to run
+        """
+        source = self._get_source()
+        if self.creep.memory.source_container:
+            if not self.creep.memory.on_source_container:
+                self.creep.moveTo(Game.getObjectById(self.creep.memory.source_container))
+        else:
+            if self.creep.memory.flag:
+                self.creep.moveTo(Game.flags[self.creep.memory.flag])
+                container_site = self.creep.pos.findInRange(FIND_CONSTRUCTION_SITES, 1).filter(
+                    lambda s: s.structureType == STRUCTURE_CONTAINER
+                )
+                if container_site:
+                    res = self.creep.build(container_site)
+        if len(self.creep.pos.lookFor(STRUCTURE_CONTAINER)) > 0:
+            self.creep.memory.on_source_container = True
+        else:
+            self.creep.harvest(source)
+
+    def _get_source(self):
+        source_container = None
+        source = self.creep.memory.source
+        flag = Game.flags[self.creep.memory.flag]
+        if not flag:
+            worked_flags = [Memory.creeps[creep].flag for creep in Object.keys(Game.creeps)
+                            if Memory.creeps[creep].role == 'remote_miner']
+
+            flags = Object.keys(Game.flags).filter(
+                lambda flag: not worked_flags.includes(flag)
+                and not str(flag).startswith('claim')
+                and not str(flag).endswith('Storage')
+                and not str(flag).endswith('Spawn')
+            )
+            if len(flags) > 0:
+                flag = Game.flags[flags[0]]
+                self.creep.memory.flag = flag.name
+        if flag:
+            if flag.room == self.creep.room:
+                if source:
+                    s = Game.getObjectById(source)
+                    if not s.structureType == STRUCTURE_CONTAINER:
+                        return s
+                sources = flag.pos.findInRange(FIND_SOURCES, 1)
+                if sources:
+                    source = sources[0]
+                    if source:
+                        self.creep.memory.source = source.id
+                        containers = source.pos.findInRange(FIND_STRUCTURES, 2).filter(
+                            lambda struct: struct.structureType == STRUCTURE_CONTAINER
+                        )
+                        if len(containers) > 0:
+                            source_container = containers[0]
+                            self.creep.memory.source_container = source_container.id
+        if source:
+            return source
+
+class RemoteCarrier(Worker):
+    role = 'remote_carrier'
+    body_composition = {
+        'large': [CARRY, CARRY, CARRY, CARRY, CARRY,
+                  CARRY, CARRY, CARRY, CARRY, CARRY,
+                  CARRY, CARRY, CARRY,
+                  MOVE, MOVE, MOVE, MOVE, MOVE,
+                  MOVE, MOVE, MOVE],
+    }
+
+    @staticmethod
+    def factory(spawn, num_workers):
+        size = 'large'
+        if spawn.room.energyAvailable >= RemoteCarrier._calculate_creation_cost(RemoteCarrier.body_composition[size]):
+            body = RemoteCarrier.body_composition[size]
+
+            console.log('spawning new {} worker creep'.format(size))
+            Creeps.create(body, spawn, RemoteCarrier.role)
+
+    def run_creep(self):
+        if _.sum(self.creep.carry) < self.creep.carryCapacity:
+            source = self._get_source()
+            if source:
+                dropped_energy = source.pos.lookFor(RESOURCE_ENERGY)
+                if len(dropped_energy) > 0:
+                    self.creep.pickup(dropped_energy[0])
+                source.transfer(self.creep, RESOURCE_ENERGY)
+                self.creep.moveTo(source)
+        else:
+            target = self._get_target()
+            if target:
+                self.creep.transfer(target, RESOURCE_ENERGY)
+                self.creep.moveTo(target)
+            move_to_flag = Game.creeps[self.creep.memory.source]
+            if move_to_flag:
+                self.creep.moveTo(Game.flags[move_to_flag.memory.flag + 'Storage'])
+            else:
+                del self.creep.memory.source
+
+    def _get_source(self):
+        source = None
+        if self.creep.memory.source:
+            source = Game.creeps[self.creep.memory.source]
+            if source:
+                return source
+            del self.creep.memory.source
+        carried_sources = [Memory.creeps[creep].source for creep in Object.keys(Game.creeps)
+                           if Memory.creeps[creep].role == 'remote_carrier']
+        sources = Object.keys(Game.creeps).filter(
+            lambda creep: not carried_sources.includes(creep)
+            and Game.creeps[creep].memory.role == 'remote_miner'
+        )
+        if len(sources) > 0:
+            source = Game.creeps[sources[0]]
+        if source:
+            self.creep.memory.source = source.name
+            return source
+        else:
+            del self.creep.memory.source
+
+    def _get_target(self):
+        if self.creep.room.storage:
+            target = self.creep.room.storage
+        elif self.creep.memory.target:
+            target = Game.getObjectById(self.creep.memory.target)
+            if target:
+                self.creep.memory.target = target.id
+        else:
+            return
+        return target
 

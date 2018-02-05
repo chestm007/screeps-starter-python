@@ -25,30 +25,25 @@ SOLDIER = soldier.Soldier.role
 REMOTE_DEFENDER = soldier.RemoteDefender.role
 SUMO = soldier.Sumo.role
 
+CREEP_FACTORY_MAP = {
+    HARVESTER: worker.Harvester.factory,
+    BUILDER: worker.Builder.factory,
+    WORKER: worker.Worker.factory,
+    MINER: worker.Miner.factory,
+    CARRIER: worker.Carrier.factory,
+    CLAIMER: worker.Claimer.factory,
+    REMOTE_MINER: worker.RemoteMiner.factory,
+    REMOTE_CARRIER: worker.RemoteCarrier.factory,
+    REMOTE_BUILDER: worker.RemoteBuilder.factory,
 
-def create_creep(creep_type, spawn, num_creeps, extra_memory_args):
-    if creep_type == WORKER:
-        return worker.Worker.factory(spawn, 9, None)
-    elif creep_type == MINER:
-        return worker.Miner.factory(spawn, 9, None)
-    elif creep_type == CARRIER:
-        return worker.Carrier.factory(spawn, num_creeps, None)
-    elif creep_type == CLAIMER:
-        return worker.Claimer.factory(spawn, 9, extra_memory_args)
-    elif creep_type == REMOTE_MINER:
-        return worker.RemoteMiner.factory(spawn, 9, extra_memory_args)
-    elif creep_type == REMOTE_CARRIER:
-        return worker.RemoteCarrier.factory(spawn, 9, extra_memory_args)
-    elif creep_type == REMOTE_BUILDER:
-        return worker.RemoteBuilder.factory(spawn, 9, extra_memory_args)
-    elif creep_type == SOLDIER:
-        return soldier.Soldier.factory(spawn, 9, None)
-    elif creep_type == REMOTE_DEFENDER:
-        return soldier.RemoteDefender.factory(spawn, 9, None)
-    elif creep_type == SUMO:
-        return soldier.Sumo.factory(spawn, 9, None)
-    else:
-        console.log('unrecognised creep type detected {}'.format(creep_type))
+    SOLDIER: soldier.Soldier.factory,
+    REMOTE_DEFENDER: soldier.RemoteDefender.factory,
+    SUMO: soldier.Sumo.factory
+}
+
+
+def create_creep(creep_type, spawn, **memory):
+    CREEP_FACTORY_MAP[creep_type](spawn, memory)
 
 
 def try_create_creep(spawn, cache):
@@ -94,7 +89,7 @@ def try_create_creep(spawn, cache):
             if num_workers >= min_workers:
                 # Ensure number of miners = number of resource points
                 num_miners = _.sum(Game.creeps, lambda c: c.pos.roomName == spawn.pos.roomName and
-                                                           (c.memory.role == MINER))
+                                                          (c.memory.role == MINER))
                 if num_miners < len(spawn.room.find(FIND_SOURCES)):
                     create_creep(MINER, spawn)
 
@@ -104,7 +99,7 @@ def try_create_creep(spawn, cache):
                 if not max_carriers:
                     max_carriers = num_miners
                 if num_carriers < max_carriers:
-                    create_creep(CARRIER, spawn, num_carriers)
+                    create_creep(CARRIER, spawn)
 
                 # if spawn.room.storage:
                 #     if spawn.room.storage.store[RESOURCE_ENERGY] > 20000:

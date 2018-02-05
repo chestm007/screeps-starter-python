@@ -7,10 +7,10 @@ __pragma__('noalias', 'keys')
 __pragma__('noalias', 'get')
 __pragma__('noalias', 'set')
 __pragma__('noalias', 'type')
-__pragma__('noalias', 'update')
 
 
 class Creeps(object):
+    role = None
     body_composition = None
     body_part_cost = {
         MOVE: 50,
@@ -38,9 +38,17 @@ class Creeps(object):
     def _calculate_creation_cost(body_composition):
         return sum([Creeps.body_part_cost[part] for part in body_composition])
 
-    @staticmethod
-    def factory(spawn, num_workers):
-        pass
+    @classmethod
+    def factory(cls, spawn, memory):
+        i = len(cls.body_composition)
+        while True:
+            i -= 1
+            if spawn.room.energyAvailable >= cls._calculate_creation_cost(cls.body_composition[i]):
+                body = cls.body_composition[i]
+
+                console.log('spawning new {} {} creep'.format(i, cls.__name__))
+                memory['role'] = cls.role
+                return Creeps.create(body, spawn, memory)
 
     @staticmethod
     def create(body, spawn, role, extra_memory_args):

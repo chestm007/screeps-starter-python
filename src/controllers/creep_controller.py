@@ -26,7 +26,7 @@ class CreepController(object):
     }
 
     def __init__(self, cache):
-        self.creeps = []  # type: list(Creep, )
+        self.creeps = []  # type: list(Creep(), )
         self.cache = cache
         self.initialize_creeps()
 

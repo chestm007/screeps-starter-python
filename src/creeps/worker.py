@@ -623,9 +623,9 @@ class Carrier(Worker):
 class Claimer(Worker):
     role = 'claimer'
 
-    body_composition = {
-        'small': [CLAIM, CLAIM, MOVE, MOVE]
-    }
+    body_composition = [
+        [CLAIM, CLAIM, MOVE, MOVE]
+    ]
 
     @staticmethod
     def factory(spawn, num_workers, room, target):

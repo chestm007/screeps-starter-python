@@ -26,10 +26,11 @@ class Creeps(object):
     def __init__(self, controller, creep):
         self.creep = creep
         self.controller = controller
-        self.structures_in_room = self.controller.cache.get_room_cache(creep.room).get_structures()
-        self.construction_sites_in_room = self.controller.cache.get_room_cache(creep.room).get_construction_sites()
-        self.resources_in_room = self.controller.cache.get_room_cache(creep.room).get_resources()
-        self.dropped_resources_in_room = self.controller.cache.get_room_cache(creep.room).get_dropped_resources()
+        self.room_cache = self.controller.cache.get_room_cache(creep.room)
+        self.structures_in_room = self.room_cache.get_structures()
+        self.construction_sites_in_room = self.room_cache.get_construction_sites()
+        self.resources_in_room = self.room_cache.get_resources()
+        self.dropped_resources_in_room = self.room_cache.get_dropped_resources()
 
     num_creep_to_size = ['small', 'small', 'medium', 'medium', 'large', 'xlarge']
 
@@ -42,7 +43,7 @@ class Creeps(object):
         pass
 
     @staticmethod
-    def create(body, spawn, role):
+    def create(body, spawn, role, extra_memory_args):
         if body is None:
             console.log('Error creating {}: no defined body composition'.format(role))
         else:
@@ -50,3 +51,13 @@ class Creeps(object):
 
     def run_creep(self):
         console.log('cannot run undefined creep {}'.format(self.creep.name))
+
+    def get_closest_to_creep(self, obj_list):
+        closest = None
+        least_distance = 1000
+        for r in obj_list:
+            distance_to_creep = r.pos.getRangeTo(self.creep.pos)
+            if distance_to_creep < least_distance:
+                least_distance = distance_to_creep
+                closest = r
+        return closest

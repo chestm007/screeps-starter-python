@@ -31,12 +31,13 @@ class Worker(Creeps):
                   CARRY, CARRY,
                   MOVE, MOVE, MOVE],
         'xlarge': [WORK, WORK, WORK, WORK, WORK,
+                    WORK, WORK,
                    CARRY, CARRY,
-                   MOVE, MOVE, MOVE]
+                   MOVE, MOVE, MOVE, MOVE]
     }
 
     @staticmethod
-    def factory(spawn, num_workers):
+    def factory(spawn, num_workers, extra_memory_args=None):
         body = None
         i = 0
         while True:
@@ -53,7 +54,7 @@ class Worker(Creeps):
                 break
 
         console.log('spawning new {} worker creep'.format(size))
-        Creeps.create(body, spawn, Worker.role)
+        return Creeps.create(body, spawn, Worker.role)
 
     def _pre_run_checks(self):
         if self._is_creep_empty():
@@ -267,16 +268,6 @@ class Worker(Creeps):
         if not self.creep.memory.filling and self.creep.carry.energy <= 0:
             return True
 
-    def get_closest_to_creep(self, obj_list):
-        closest = None
-        least_distance = 1000
-        for r in obj_list:
-            distance_to_creep = r.pos.getRangeTo(self.creep.pos)
-            if distance_to_creep < least_distance:
-                least_distance = distance_to_creep
-                closest = r
-        return closest
-
     def _get_target(self) -> RoomObject:
         pass
 
@@ -331,11 +322,11 @@ class Builder(Worker):
             if not target:
                 target = self.get_closest_to_creep(
                     self.construction_sites_in_room.filter(
-                        lambda s: s.structureType == STRUCTURE_ROAD
+                        lambda s: s.structureType == STRUCTURE_SPAWN
                     )
                 )
-                if not target:
-                    target = self.creep.pos.findClosestByRange(FIND_CONSTRUCTION_SITES)
+            if not target:
+                target = self.creep.pos.findClosestByRange(FIND_CONSTRUCTION_SITES)
             if target:
                 self.creep.memory.target = target.id
             claimers = [Game.creeps[creep] for creep in Object.keys(Game.creeps)
@@ -407,7 +398,7 @@ class Miner(Harvester):
     }
 
     @staticmethod
-    def factory(spawn, num_workers):
+    def factory(spawn, num_workers, extra_memory_args=None):
         i = 0
         num_workers = 5
         while True:
@@ -420,7 +411,7 @@ class Miner(Harvester):
             i += 1
         if body:
             console.log('spawning new {} worker creep'.format(size))
-            Creeps.create(body, spawn, Miner.role)
+            return Creeps.create(body, spawn, Miner.role)
 
     def run_creep(self):
         """
@@ -428,13 +419,15 @@ class Miner(Harvester):
         :param creep: The creep to run
         """
         source = self._get_source()
-        if not self.creep.memory.on_source_container:
-            self.creep.moveTo(Game.getObjectById(self.creep.memory.source_container))
-        if len(self.creep.pos.lookFor(STRUCTURE_CONTAINER)) > 0:
-            self.creep.memory.on_source_container = True
+        if self.creep.memory.source_container:
+            if not self.creep.memory.on_source_container:
+                self.creep.moveTo(Game.getObjectById(self.creep.memory.source_container))
+            if len(self.creep.pos.lookFor(STRUCTURE_CONTAINER)) > 0:
+                self.creep.memory.on_source_container = True
         else:
-            self.creep.harvest(source)
-            self.creep.drop(RESOURCE_ENERGY)
+            self.creep.moveTo(source)
+        self.creep.harvest(source)
+        self.creep.drop(RESOURCE_ENERGY)
 
     def _get_target(self):
         if self.creep.memory.target:
@@ -510,9 +503,16 @@ class Carrier(Worker):
     }
 
     @staticmethod
-    def factory(spawn, num_workers):
+    def factory(spawn, num_workers, extra_memory_args=None):
         i = 0
         if num_workers > 4:
+            num_workers = 4
+        min_size = spawn.room.controller.level
+        if min_size > 4:
+            min_size = 4
+        if num_workers < 1:
+            min_size = 0
+        else:
             num_workers = 4
         while True:
             size = Carrier.num_creep_to_size[num_workers - i]
@@ -522,9 +522,11 @@ class Carrier(Worker):
                 body = Carrier.body_composition[size]
                 break
             i += 1
+            if num_workers - i < min_size:
+                break
 
         console.log('spawning new {} worker creep'.format(size))
-        Creeps.create(body, spawn, Carrier.role)
+        return Creeps.create(body, spawn, Carrier.role)
 
     def run_creep(self):
         source = None
@@ -566,6 +568,7 @@ class Carrier(Worker):
             if source:
                 dropped_energy = source.pos.lookFor(RESOURCE_ENERGY)
                 if len(dropped_energy) > 0:
+                    self.creep.moveTo(source)
                     self.creep.pickup(dropped_energy[0])
             self._harvest_source(source)
         else:
@@ -576,17 +579,28 @@ class Carrier(Worker):
     def _get_target(self):
         if self.creep.memory.target:
             return Game.getObjectById(self.creep.memory.target)
+
         target = self.get_closest_to_creep(
             self.structures_in_room.filter(
                 lambda s: (
                               s.structureType == STRUCTURE_EXTENSION
                               or s.structureType == STRUCTURE_SPAWN
-                              or s.structureType == STRUCTURE_TOWER
                           ) and s.energy < s.energyCapacity
             ))
         if target:
             self.creep.memory.target = target.id
             return target
+
+        target = self.get_closest_to_creep(
+            self.structures_in_room.filter(
+                lambda s: s.structureType == STRUCTURE_TOWER
+                and s.energy < s.energyCapacity * 0.7
+            )
+        )
+        if target:
+            self.creep.memory.target = target.id
+            return target
+
         containers = [Memory.creeps[creep].source_container for creep in Object.keys(Game.creeps)]
         unmined_containers = self.structures_in_room.filter(
             lambda s: (s.structureType == STRUCTURE_CONTAINER or s.structureType == STRUCTURE_STORAGE)
@@ -599,6 +613,7 @@ class Carrier(Worker):
             if target:
                 self.creep.memory.target = target.id
                 return target
+
         target = Game.creeps[self.creep.name].room.storage
         if target:
             self.creep.memory.target = target.id
@@ -613,31 +628,60 @@ class Claimer(Worker):
     }
 
     @staticmethod
-    def factory(spawn, num_workers):
+    def factory(spawn, num_workers, room, target):
         size = 'small'
         if spawn.room.energyAvailable >= Claimer._calculate_creation_cost(Claimer.body_composition[size]):
             body = Claimer.body_composition[size]
 
         console.log('spawning new {} worker creep'.format(size))
-        Creeps.create(body, spawn, Claimer.role)
+        name = spawn.room.name + Game.time
+        creep = spawn.spawnCreep(body, name)
+        Memory.creeps[name] = {'role': Claimer.role, 'room': room, 'target': target}
+        return creep
+        return Creeps.create(body, spawn, Claimer.role, extra_memory_args=extra_memory_args)
 
     def run_creep(self):
-        for flag in Object.keys(Game.flags):
-            if str(flag).startswith('claim'):
-                if not Game.flags[flag].room:
-                    self.creep.moveTo(Game.flags[flag].pos)
-                else:
-                    if Game.flags[flag].room.controller:
-                        if self.creep.memory.target:
-                            controller = Game.getObjectById(self.creep.memory.target)
-                        else:
-                            controller = Game.flags[flag].room.controller
-                            self.creep.memory.target = controller.id
+        return
+        target = self._get_target()
+        if self.creep.memory.flag:
+            if self.creep.memory.flag.startswith('claim'):
+                res = self.creep.claimController(target)
+            elif self.creep.memory.flag.startswith('reserve'):
+                res = self.creep.reserveController(target)
+            else:
+                return
+            if res != OK:
+                self.creep.moveTo(target)
 
-                        if self.creep.claimController(controller) != OK:
-                            self.creep.moveTo(controller)
-                            self.creep.claimController(controller)
-                            self.creep.reserveController(controller)
+    def _get_target(self):
+        target = Game.getObjectById(self.creep.memory.target)
+        if target:
+            if target.room != self.creep.room:
+                target = None
+        if not target:
+            if self.creep.memory.flag:
+                flag = Game.flags[self.creep.memory.flag.replace('Spawn', '')]
+            if not flag:
+                worked_flags = [Memory.creeps[creep].flag for creep in Object.keys(Game.creeps)
+                                if Memory.creeps[creep].role == 'claimer']
+
+                flags = Object.keys(Game.flags).filter(
+                    lambda f: not worked_flags.includes(f)
+                    and (str(f).startswith('claim') or str(f).startswith('reserve'))
+                    and not str(f).endswith('Spawn')
+                )
+                if len(flags) > 0:
+                    flag = Game.flags[flags[0]]
+                    self.creep.memory.flag = flag.name
+            if flag:
+                if flag.room == self.creep.room:
+                    target = Game.flags[flag.name].room.controller
+                    if target:
+                        self.creep.memory.target = target.id
+        if target:
+            return target
+        if flag:
+            return flag
 
 
 class RemoteMiner(Worker):
@@ -647,27 +691,19 @@ class RemoteMiner(Worker):
         'small': [WORK, WORK, CARRY, MOVE],
         'medium': [WORK, WORK, WORK, CARRY, MOVE],
         'large': [WORK, WORK, WORK, CARRY, MOVE],
-        'xlarge': [WORK, WORK, WORK,
-                   CARRY, CARRY, CARRY, CARRY, CARRY,
-                   CARRY, CARRY, CARRY, CARRY, CARRY,
-                   MOVE],
+        'xlarge': [WORK, WORK, WORK, WORK, WORK,
+                   MOVE, MOVE, MOVE, MOVE, MOVE],
     }
 
     @staticmethod
-    def factory(spawn, num_workers):
-        i = 0
-        num_workers = 5
-        while True:
-            size = RemoteMiner.num_creep_to_size[num_workers - i]
-            if not size:
-                return
-            if spawn.room.energyAvailable >= RemoteMiner._calculate_creation_cost(RemoteMiner.body_composition[size]):
-                body = RemoteMiner.body_composition[size]
-                break
-            i += 1
-        if body:
-            console.log('spawning new {} worker creep'.format(size))
-            Creeps.create(body, spawn, RemoteMiner.role)
+    def factory(spawn, num_workers, extra_memory_args=None):
+        _class = RemoteMiner
+        size = 'xlarge'
+        if spawn.room.energyAvailable >= _class._calculate_creation_cost(_class.body_composition[size]):
+            body = _class.body_composition[size]
+
+            console.log('spawning new {} {} creep'.format(size, _class.__name__))
+            return Creeps.create(body, spawn, _class.role, extra_memory_args)
 
     def run_creep(self):
         """
@@ -688,22 +724,24 @@ class RemoteMiner(Worker):
                     res = self.creep.build(container_site)
         if len(self.creep.pos.lookFor(STRUCTURE_CONTAINER)) > 0:
             self.creep.memory.on_source_container = True
-        else:
-            self.creep.harvest(source)
+        self.creep.harvest(source)
 
     def _get_source(self):
         source_container = None
         source = self.creep.memory.source
-        flag = Game.flags[self.creep.memory.flag]
+        if self.creep.memory.flag:
+            flag = Game.flags[self.creep.memory.flag]
         if not flag:
             worked_flags = [Memory.creeps[creep].flag for creep in Object.keys(Game.creeps)
                             if Memory.creeps[creep].role == 'remote_miner']
 
             flags = Object.keys(Game.flags).filter(
-                lambda flag: not worked_flags.includes(flag)
-                and not str(flag).startswith('claim')
-                and not str(flag).endswith('Storage')
-                and not str(flag).endswith('Spawn')
+                lambda f: not worked_flags.includes(f)
+                and str(f).startswith('RemoteMine')
+                and not str(f).startswith('claim')
+                and not str(f).startswith('reserve')
+                and not str(f).endswith('Storage')
+                and not str(f).endswith('Spawn')
             )
             if len(flags) > 0:
                 flag = Game.flags[flags[0]]
@@ -728,26 +766,34 @@ class RemoteMiner(Worker):
         if source:
             return source
 
+
 class RemoteCarrier(Worker):
     role = 'remote_carrier'
     body_composition = {
         'large': [CARRY, CARRY, CARRY, CARRY, CARRY,
                   CARRY, CARRY, CARRY, CARRY, CARRY,
+                  CARRY, CARRY, CARRY, CARRY, CARRY,
                   CARRY, CARRY, CARRY,
                   MOVE, MOVE, MOVE, MOVE, MOVE,
-                  MOVE, MOVE, MOVE],
+                  MOVE, MOVE, MOVE, MOVE],
     }
 
     @staticmethod
-    def factory(spawn, num_workers):
+    def factory(spawn, num_workers, extra_memory_args=None):
+        _class = RemoteCarrier
         size = 'large'
-        if spawn.room.energyAvailable >= RemoteCarrier._calculate_creation_cost(RemoteCarrier.body_composition[size]):
-            body = RemoteCarrier.body_composition[size]
+        if spawn.room.energyAvailable >= _class._calculate_creation_cost(_class.body_composition[size]):
+            body = _class.body_composition[size]
 
-            console.log('spawning new {} worker creep'.format(size))
-            Creeps.create(body, spawn, RemoteCarrier.role)
+            console.log('spawning new {} {} creep'.format(size, _class.__name__))
+            return Creeps.create(body, spawn, _class.role, extra_memory_args)
 
     def run_creep(self):
+        #on_road = _(self.creep.pos.lookFor(LOOK_STRUCTURES)).filter(
+        #    lambda s: s.structureType == STRUCTURE_ROAD
+        #).sample()
+        #if not on_road:
+        #    self.creep.pos.createConstructionSite(STRUCTURE_ROAD)
         if _.sum(self.creep.carry) < self.creep.carryCapacity:
             source = self._get_source()
             if source:
@@ -761,11 +807,17 @@ class RemoteCarrier(Worker):
             if target:
                 self.creep.transfer(target, RESOURCE_ENERGY)
                 self.creep.moveTo(target)
-            move_to_flag = Game.creeps[self.creep.memory.source]
-            if move_to_flag:
-                self.creep.moveTo(Game.flags[move_to_flag.memory.flag + 'Storage'])
             else:
-                del self.creep.memory.source
+                flag = Game.getObjectById(self.creep.memory.flag)
+                if not flag:
+                    move_to_flag = Game.creeps[self.creep.memory.source]
+                    if move_to_flag:
+                        flag = Game.flags[move_to_flag.memory.flag + 'Storage']
+                        if flag:
+                            self.creep.memory.flag = flag.name
+                else:
+                    del self.creep.memory.source
+                self.creep.moveTo(flag)
 
     def _get_source(self):
         source = None
@@ -798,4 +850,113 @@ class RemoteCarrier(Worker):
         else:
             return
         return target
+
+
+class RemoteBuilder(Worker):
+    role = 'remote_builder'
+
+    body_composition = {
+        'large': [WORK,
+                  CARRY, CARRY, CARRY, CARRY,
+                  MOVE, MOVE, MOVE, MOVE],
+    }
+
+    @staticmethod
+    def factory(spawn, num_workers, extra_memory_args=None):
+        _class = RemoteBuilder
+        size = 'large'
+        if spawn.room.energyAvailable >= _class._calculate_creation_cost(_class.body_composition[size]):
+            body = _class.body_composition[size]
+
+            console.log('spawning new {} {} creep'.format(size, _class.__name__))
+            return Creeps.create(body, spawn, _class.role, extra_memory_args)
+
+    def run_creep(self):
+        if self.creep.carry[RESOURCE_ENERGY] >= self.creep.carryCapacity:
+            self.creep.memory.filling = False
+        elif self.creep.carry[RESOURCE_ENERGY] <= 0:
+            self.creep.memory.filling = True
+        if self.creep.memory.filling:
+            source = self._get_source()
+            if source:
+                self.creep.moveTo(source)
+                self.creep.withdraw(source, RESOURCE_ENERGY)
+                self.creep.harvest(source)
+        else:
+            target = self._get_target()
+            if target:
+                if target.color:
+                    self.creep.moveTo(target)
+                res = self.creep.build(target)
+                if res == ERR_INVALID_TARGET:
+                    res = self.creep.repair(target)
+                if res == ERR_NOT_IN_RANGE:
+                    self.creep.moveTo(target)
+                    self.creep.build(target)
+                if target.hits:
+                    if target.hits >= target.hitsMax:
+                        del self.creep.memory.target
+
+    def _get_source(self):
+        source = Game.getObjectById(self.creep.memory.source)
+        if not source:
+            for spawn in Object.keys(Game.spawns):
+                cur_spawn = Game.spawns[spawn]
+                if cur_spawn:
+                    if cur_spawn.room == self.creep.room:
+                        source = cur_spawn.room.storage
+                        if source:
+                            self.creep.memory.source = source.id
+        target = Game.getObjectById(self.creep.memory.target)
+        if target and target.structureType == STRUCTURE_SPAWN:
+            if not source or not source.structureType == RESOURCE_ENERGY:
+                source = self.creep.pos.findClosestByRange(FIND_SOURCES)
+                console.log(source)
+                if source:
+                    self.creep.memory.source = source.id
+        return source
+
+    def _get_target(self):
+        target = Game.getObjectById(self.creep.memory.target)
+        if not target:
+            if self.creep.memory.flag:
+                flag = Game.flags[self.creep.memory.flag.replace('Spawn', '')]
+            if not flag:
+                worked_flags = [Memory.creeps[creep].flag for creep in Object.keys(Game.creeps)
+                                if Memory.creeps[creep].role == 'remote_builder']
+
+                flags = Object.keys(Game.flags).filter(
+                    lambda f: not worked_flags.includes(f)
+                              and (
+                                  str(f).startswith('reserve')
+                                  or str(f).startswith('claim')
+                              )
+                )
+                if len(flags) > 0:
+                    flag = Game.flags[flags[0]]
+                    self.creep.memory.flag = flag.name
+            if flag:
+                if flag.room == self.creep.room:
+                    construction_sites = self.creep.room.find(FIND_CONSTRUCTION_SITES)
+                    if construction_sites:
+                        target = self.get_closest_to_creep(
+                            construction_sites.filter(
+                                lambda s: s.structureType == STRUCTURE_SPAWN
+                                or s.structureType == STRUCTURE_ROAD
+                            )
+                        )
+                    structures_in_room = self.creep.room.find(FIND_STRUCTURES)
+                    if structures_in_room:
+                        damaged_road = self.get_closest_to_creep(structures_in_room.filter(
+                            lambda s: s.structureType == STRUCTURE_ROAD
+                            and s.hits < s.hitsMax * 0.9
+                        ))
+                        if damaged_road:
+                            target = damaged_road
+        if target:
+            self.creep.memory.target = target.id
+            return target
+        elif flag:
+            return flag
+
 

@@ -13,30 +13,37 @@ __pragma__('noalias', 'update')
 class TowerController:
     def __init__(self, room):
         self.room = room
-        self.towers = Game.rooms[self.room].find(FIND_MY_STRUCTURES).filter(
-            lambda s: s.structureType == STRUCTURE_TOWER
-        )
-        max_wall_hits = Memory.rooms[room].settings.max_wall_hits
-        if not max_wall_hits:
-            max_wall_hits = 30000
+        settings = Memory.rooms[self.room].settings
+        if not settings:
+            Memory.rooms[self.room].settings = {}
+        self.max_wall_hits = Memory.rooms[room].settings.max_wall_hits
+        if not self.max_wall_hits:
+            self.max_wall_hits = 30000
+        self.max_rampart_hits = Memory.rooms[room].settings.max_rampart_hits
+        if not self.max_rampart_hits:
+            self.max_rampart_hits = 30000
 
-        max_rampart_hits = Memory.rooms[room].settings.max_rampart_hits
-        if not max_rampart_hits:
-            max_rampart_hits = 30000
-        self.all_structures = Game.rooms[self.room].find(FIND_STRUCTURES)
-        self.damaged_structures = self.all_structures.filter(
-            lambda s: s.hits < s.hitsMax
-            and s.structureType != STRUCTURE_WALL
-            and s.structureType != STRUCTURE_RAMPART
+        self.settings = None
+        self.towers = []
+        if Game.rooms[self.room]:
+            self.towers = Game.rooms[self.room].find(FIND_MY_STRUCTURES).filter(
+                lambda s: s.structureType == STRUCTURE_TOWER
+            )
 
-        )
-        self.damaged_walls = self.all_structures.filter(
-            lambda s: s.structureType == STRUCTURE_WALL and s.hits < max_wall_hits
-        )
-        self.damaged_ramparts = self.all_structures.filter(
-            lambda s: s.structureType == STRUCTURE_RAMPART and s.hits < max_rampart_hits
-        )
-        self.hostile_creeps = Game.rooms[self.room].find(FIND_HOSTILE_CREEPS)
+            self.all_structures = Game.rooms[self.room].find(FIND_STRUCTURES)
+            self.damaged_structures = self.all_structures.filter(
+                lambda s: s.hits < s.hitsMax
+                and s.structureType != STRUCTURE_WALL
+                and s.structureType != STRUCTURE_RAMPART
+
+            )
+            self.damaged_walls = self.all_structures.filter(
+                lambda s: s.structureType == STRUCTURE_WALL and s.hits < self.max_wall_hits
+            )
+            self.damaged_ramparts = self.all_structures.filter(
+                lambda s: s.structureType == STRUCTURE_RAMPART and s.hits < self.max_rampart_hits
+            )
+            self.hostile_creeps = Game.rooms[self.room].find(FIND_HOSTILE_CREEPS)
 
     def run_towers(self):
         for tower in self.towers:

@@ -1,3 +1,4 @@
+from creeps import soldier
 from creeps import worker
 from defs import *
 
@@ -19,7 +20,9 @@ class CreepController(object):
         worker.Carrier.role: worker.Carrier,
         worker.Claimer.role: worker.Claimer,
         worker.RemoteMiner.role: worker.RemoteMiner,
-        worker.RemoteCarrier.role: worker.RemoteCarrier
+        worker.RemoteCarrier.role: worker.RemoteCarrier,
+        worker.RemoteBuilder.role: worker.RemoteBuilder,
+        soldier.RemoteDefender.role: soldier.RemoteDefender
     }
 
     #'.'.join(worker..body_composition['small'] ): worker..role,
@@ -44,6 +47,8 @@ class CreepController(object):
         '.'.join(worker.RemoteMiner.body_composition['large']): worker.RemoteMiner.role,
         '.'.join(worker.RemoteMiner.body_composition['xlarge']): worker.RemoteMiner.role,
         '.'.join(worker.RemoteCarrier.body_composition['large']): worker.RemoteCarrier.role,
+        '.'.join(worker.RemoteBuilder.body_composition['large']): worker.RemoteBuilder.role,
+        '.'.join(soldier.RemoteDefender.body_composition['large']): soldier.RemoteDefender.role,
     }
 
     def __init__(self, cache):
@@ -55,14 +60,15 @@ class CreepController(object):
         self.creeps = []
         for name in Object.keys(Game.creeps):
             creep = Game.creeps[name]
-            creep_class = self.get_creep_object_from_type(creep)
-            if not creep_class:
-                creep_type = self.creep_body_map['.'.join([i.type for i in creep.body])]
-                if not creep_type:
-                    console.log('uncategorizable creep detected: {}'.format(creep.name))
-                    return
-                creep.memory.role = creep_type
-            self.creeps.append(self.creep_type_map[creep.memory.role](self, creep))
+            if not creep.spawning:
+                creep_class = self.get_creep_object_from_type(creep)
+                if not creep_class:
+                    creep_type = self.creep_body_map['.'.join([i.type for i in creep.body])]
+                    if not creep_type:
+                        console.log('uncategorizable creep detected: {}'.format(creep.name))
+                        return
+                    #creep.memory.role = creep_type
+                self.creeps.append(self.creep_type_map[creep.memory.role](self, creep))
 
     def run_creeps(self):
         for creep in self.creeps:

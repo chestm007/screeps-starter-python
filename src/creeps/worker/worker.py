@@ -1,7 +1,4 @@
 from creeps.creeps import Creeps
-from creeps.worker.claimer import Claimer
-from creeps.worker.harvester import Harvester
-from creeps.worker.builder import Builder
 from defs import *
 
 __pragma__('noalias', 'name')
@@ -67,15 +64,6 @@ class Worker(Creeps):
                 if target:
                     self.creep.memory.target = target.id
                     return 'structures need repair {}'.format(target.structureType)
-            claimers = [Game.creeps[creep] for creep in Object.keys(Game.creeps)
-                        if Game.creeps[creep].memory.role == Claimer.role]
-
-            for claimer in claimers:
-                unbuilt_spawn = _(claimer.room.find(FIND_CONSTRUCTION_SITES).filter(
-                    lambda s: s.structureType == STRUCTURE_SPAWN
-                )).sample()
-                if unbuilt_spawn:
-                    return True
 
     def _should_be_harvester(self):
         if self._get_num_harvesters() < 1:
@@ -91,15 +79,6 @@ class Worker(Creeps):
                 )
                 if target:
                     self.creep.memory.target = target.id
-                    return False
-            claimers = [Game.creeps[creep] for creep in Object.keys(Game.creeps)
-                        if Game.creeps[creep].memory.role == Claimer.role]
-
-            for claimer in claimers:
-                unbuilt_spawn = _(claimer.room.find(FIND_CONSTRUCTION_SITES).filter(
-                    lambda s: s.structureType == STRUCTURE_SPAWN
-                )).sample()
-                if unbuilt_spawn:
                     return False
             if len(self.construction_sites_in_room) <= 0:
                 return 'no construction sites'
@@ -255,3 +234,103 @@ class Worker(Creeps):
         pass
 
 
+class Harvester(Worker):
+    role = 'harvester'
+
+    def run_creep(self):
+        """
+        Runs a creep as a generic harvester.
+        """
+        if self._should_be_builder():
+            self._become_builder()
+            return
+
+        self._pre_run_checks()
+
+        if self.creep.memory.filling:
+            self._harvest_source(self._get_source())
+        else:
+            self._transfer_energy(self._get_target())
+
+    def _get_target(self):
+        target = None
+        # If we have a saved target, use it
+        if self.creep.memory.target:
+            target = Game.getObjectById(self.creep.memory.target)
+        else:
+            # fill extentions and spawns first
+            target = self.get_closest_to_creep(
+                self.structures_in_room.filter(
+                    lambda s: (
+                                  s.structureType == STRUCTURE_EXTENSION
+                                  or s.structureType == STRUCTURE_SPAWN
+                                  or s.structureType == STRUCTURE_TOWER
+                              ) and s.energy < s.energyCapacity
+                ))
+            if not target:
+                # Get a random new target.
+                target = _(self.structures_in_room).filter(
+                    lambda s: s.structureType == STRUCTURE_CONTROLLER
+                ).sample()
+            if target:
+                self.creep.memory.target = target.id
+        return target
+
+
+class Builder(Worker):
+    role = 'builder'
+
+    def run_creep(self):
+        if self._should_be_harvester():
+            self._become_harvester()
+            return
+
+        self._pre_run_checks()
+
+        if self.creep.memory.filling:
+            self._harvest_source(self._get_source())
+
+        else:
+            target = self._get_target()
+            if target:
+                if not target:
+                    del self.creep.memory.target
+                    return
+                if target.structureType == STRUCTURE_ROAD or target.structureType == STRUCTURE_CONTAINER:
+                    if target.hits >= target.hitsMax / 3 * 2:
+                        del self.creep.memory.target
+                        self._get_target()
+                    res = self.creep.repair(target)
+                    if res == ERR_NOT_IN_RANGE:
+                        self.creep.moveTo(target)
+                        return
+                    elif res == OK:
+                        return
+                res = self.creep.build(target)
+                if res == ERR_NOT_IN_RANGE:
+                    self.creep.moveTo(target)
+                    return
+                elif res == OK:
+                    return
+            del self.creep.memory.target
+
+    def _get_target(self):
+        target = None
+        if self.creep.memory.target:
+            target = Game.getObjectById(self.creep.memory.target)
+        else:
+            if self.creep.memory.source:
+                target = self.get_closest_to_creep(
+                    self.structures_in_room.filter(lambda s: s.hits < s.hitsMax / 2)
+                )
+            if not target:
+                target = self.get_closest_to_creep(
+                    self.construction_sites_in_room.filter(
+                        lambda s: s.structureType == STRUCTURE_SPAWN
+                    )
+                )
+            if not target:
+                target = self.creep.pos.findClosestByRange(FIND_CONSTRUCTION_SITES)
+            if target:
+                self.creep.memory.target = target.id
+        return target

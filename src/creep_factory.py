@@ -1,5 +1,11 @@
-from creeps import worker
 from creeps import soldier
+from creeps.worker.worker import Worker, Builder, Harvester
+from creeps.worker.carrier import Carrier
+from creeps.worker.claimer import Claimer
+from creeps.worker.miner import Miner
+from creeps.worker.remote_builder import RemoteBuilder
+from creeps.worker.remote_carrier import RemoteCarrier
+from creeps.worker.remote_miner import RemoteMiner
 from defs import *
 
 __pragma__('noalias', 'name')
@@ -11,30 +17,30 @@ __pragma__('noalias', 'set')
 __pragma__('noalias', 'type')
 __pragma__('noalias', 'update')
 
-HARVESTER = worker.Harvester.role
-BUILDER = worker.Builder.role
-WORKER = worker.Worker.role
-MINER = worker.Miner.role
-CARRIER = worker.Carrier.role
-CLAIMER = worker.Claimer.role
-REMOTE_MINER = worker.RemoteMiner.role
-REMOTE_CARRIER = worker.RemoteCarrier.role
-REMOTE_BUILDER = worker.RemoteBuilder.role
+HARVESTER = Harvester.role
+BUILDER = Builder.role
+WORKER = Worker.role
+MINER = Miner.role
+CARRIER = Carrier.role
+CLAIMER = Claimer.role
+REMOTE_MINER = RemoteMiner.role
+REMOTE_CARRIER = RemoteCarrier.role
+REMOTE_BUILDER = RemoteBuilder.role
 
 SOLDIER = soldier.Soldier.role
 REMOTE_DEFENDER = soldier.RemoteDefender.role
 SUMO = soldier.Sumo.role
 
 CREEP_FACTORY_MAP = {
-    HARVESTER: worker.Harvester.factory,
-    BUILDER: worker.Builder.factory,
-    WORKER: worker.Worker.factory,
-    MINER: worker.Miner.factory,
-    CARRIER: worker.Carrier.factory,
-    CLAIMER: worker.Claimer.factory,
-    REMOTE_MINER: worker.RemoteMiner.factory,
-    REMOTE_CARRIER: worker.RemoteCarrier.factory,
-    REMOTE_BUILDER: worker.RemoteBuilder.factory,
+    HARVESTER: Harvester.factory,
+    BUILDER: Builder.factory,
+    WORKER: Worker.factory,
+    MINER: Miner.factory,
+    CARRIER: Carrier.factory,
+    CLAIMER: Claimer.factory,
+    REMOTE_MINER: RemoteMiner.factory,
+    REMOTE_CARRIER: RemoteCarrier.factory,
+    REMOTE_BUILDER: RemoteBuilder.factory,
 
     SOLDIER: soldier.Soldier.factory,
     REMOTE_DEFENDER: soldier.RemoteDefender.factory,
@@ -42,7 +48,10 @@ CREEP_FACTORY_MAP = {
 }
 
 
-def create_creep(creep_type, spawn, **memory):
+def create_creep(creep_type, spawn, memory):
+    console.log(memory == undefined)
+    if memory == undefined:
+        memory = {}
     CREEP_FACTORY_MAP[creep_type](spawn, memory)
 
 

@@ -1,7 +1,14 @@
-from creeps.worker.harvester import Harvester
-from defs import WORK, MOVE, Game, STRUCTURE_CONTAINER, RESOURCE_ENERGY, Memory, Object, FIND_STRUCTURES, \
-    ERR_NOT_IN_RANGE, ERR_FULL, OK, ERR_INVALID_TARGET, console
+from creeps.worker.worker import Harvester
+from defs import *
 
+__pragma__('noalias', 'name')
+__pragma__('noalias', 'undefined')
+__pragma__('noalias', 'Infinity')
+__pragma__('noalias', 'keys')
+__pragma__('noalias', 'get')
+__pragma__('noalias', 'set')
+__pragma__('noalias', 'type')
+__pragma__('noalias', 'update')
 
 class Miner(Harvester):
     role = 'miner'

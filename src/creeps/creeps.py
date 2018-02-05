@@ -51,11 +51,11 @@ class Creeps(object):
                 return Creeps.create(body, spawn, memory)
 
     @staticmethod
-    def create(body, spawn, role, extra_memory_args):
+    def create(body, spawn, memory):
         if body is None:
             console.log('Error creating {}: no defined body composition'.format(role))
         else:
-            spawn.createCreep(body, None, {'role': role})
+            spawn.createCreep(body, None, memory)
 
     def run_creep(self):
         console.log('cannot run undefined creep {}'.format(self.creep.name))

@@ -1,5 +1,11 @@
 from creeps import soldier
-from creeps import worker
+from creeps.worker.worker import Worker, Builder, Harvester
+from creeps.worker.carrier import Carrier
+from creeps.worker.claimer import Claimer
+from creeps.worker.miner import Miner
+from creeps.worker.remote_builder import RemoteBuilder
+from creeps.worker.remote_carrier import RemoteCarrier
+from creeps.worker.remote_miner import RemoteMiner
 from defs import *
 
 __pragma__('noalias', 'name')
@@ -14,14 +20,14 @@ __pragma__('noalias', 'update')
 
 class CreepController(object):
     creep_type_map = {
-        worker.Harvester.role: worker.Harvester,
-        worker.Builder.role: worker.Builder,
-        worker.Miner.role: worker.Miner,
-        worker.Carrier.role: worker.Carrier,
-        worker.Claimer.role: worker.Claimer,
-        worker.RemoteMiner.role: worker.RemoteMiner,
-        worker.RemoteCarrier.role: worker.RemoteCarrier,
-        worker.RemoteBuilder.role: worker.RemoteBuilder,
+        Harvester.role: Harvester,
+        Builder.role: Builder,
+        Miner.role: Miner,
+        Carrier.role: Carrier,
+        Claimer.role: Claimer,
+        RemoteMiner.role: RemoteMiner,
+        RemoteCarrier.role: RemoteCarrier,
+        RemoteBuilder.role: RemoteBuilder,
         soldier.RemoteDefender.role: soldier.RemoteDefender
     }
 

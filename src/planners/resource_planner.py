@@ -1,4 +1,3 @@
-from creep_factory import HARVESTER, MINER
 from defs import *
 
 __pragma__('noalias', 'name')

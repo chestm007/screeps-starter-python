@@ -34,7 +34,6 @@ def main():
     cacher = Cache()
     for creep_name in Object.keys(Game.creeps):
         cacher.add_creep_to_cache(Game.creeps[creep_name])
-    cacher.build_missing_creeps()
     # console.log('missing remote creeps')
     # console.log('builders: ', cacher.miss_builders)
     # console.log('claimers: ', cacher.miss_claimers)

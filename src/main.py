@@ -53,7 +53,7 @@ def main():
     # Run each tower (shoot things and heal stuff)
     for room_name in Object.keys(Memory.rooms):
         hive_controller = HiveController(room_name)
-        #hive_controller.run()
+        hive_controller.run()
     # Run each spawn (replace dead creeps with moar minions)
     # TODO: move to HiveController()
     for name in Object.keys(Game.spawns):

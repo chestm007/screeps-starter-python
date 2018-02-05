@@ -36,13 +36,16 @@ class Creeps(object):
 
     @staticmethod
     def _calculate_creation_cost(body_composition):
-        return sum([Creeps.body_part_cost[part] for part in body_composition])
+        if body_composition:
+            return sum([Creeps.body_part_cost[part] for part in body_composition])
 
     @classmethod
     def factory(cls, spawn, memory):
         i = len(cls.body_composition)
         while True:
             i -= 1
+            if i < 0:
+                break
             if spawn.room.energyAvailable >= cls._calculate_creation_cost(cls.body_composition[i]):
                 body = cls.body_composition[i]
 

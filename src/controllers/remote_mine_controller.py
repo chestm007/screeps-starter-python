@@ -1,5 +1,5 @@
 import creep_factory
-from creep_factory import CLAIMER, REMOTE_DEFENDER, REMOTE_MINER, REMOTE_CARRIER
+from creep_factory import CLAIMER, REMOTE_DEFENDER, REMOTE_MINER, REMOTE_CARRIER, REMOTE_BUILDER
 from defs import *
 
 __pragma__('noalias', 'name')
@@ -37,19 +37,26 @@ class RemoteMineController:
             self.memory.controller = None
         self.controller = Game.getObjectById(self.memory.controller)
 
-        self.creeps = _.filter(Memory.creeps, lambda c: c.room == self._name)
-        self.claimer = _.filter(self.creeps, lambda c: c.role == CLAIMER)
-        self.miners = _.filter(self.creeps, lambda c: c.role == REMOTE_MINER)
-        self.carriers = _.filter(self.creeps, lambda c: c.role == REMOTE_CARRIER)
-        self.defender = _.filter(self.creeps, lambda c: c.role == REMOTE_DEFENDER)
+        self.creeps = {n: Memory.creeps[n] for n in Object.keys(Memory.creeps)
+                       if Memory.creeps[n].room == self._name}
+        self.claimers = {n: Memory.creeps[n] for n in Object.keys(self.creeps)
+                         if Memory.creeps[n].role == CLAIMER}
+        self.miners = {n: Memory.creeps[n] for n in Object.keys(self.creeps)
+                       if Memory.creeps[n].role == REMOTE_MINER}
+        self.carriers = {n: Memory.creeps[n] for n in Object.keys(self.creeps)
+                         if Memory.creeps[n].role == REMOTE_CARRIER}
+        self.defenders = {n: Memory.creeps[n] for n in Object.keys(self.creeps)
+                          if Memory.creeps[n].role == REMOTE_DEFENDER}
+        self.builders = {n: Memory.creeps[n] for n in Object.keys(self.creeps)
+                         if Memory.creeps[n].role == REMOTE_BUILDER}
 
     def run(self):
 
         # check if we have a claimer already
-        if len(self.claimer) <= 0:
+        if len(Object.keys(self.claimers)) <= 0:
             # if not spawn one
             self.spawn_creep(CLAIMER, {'room': self._name} )
-        console.log('num_claimers', len(self.claimer))
+        console.log('num_claimers', len(Object.keys(self.claimers)))
 
         self.run_claimer()
 
@@ -62,41 +69,50 @@ class RemoteMineController:
         if self.memory.sources and self.memory.controller:
 
             # get number of sources
-            num_sources = len(self.sources)
+            num_sources = len(Object.keys(self.sources))
             # get number of miners
-            num_miners = len(self.miners)
+            num_miners = len(Object.keys(self.miners))
             console.log('num_sources', num_sources)
             console.log('num_miners', num_miners)
             # spawn more miners if miners < sources
             if num_miners < num_sources:
-                miner_targets = [c.target for c in self.miners]
+                miner_targets = [self.miners[c].source for c in Object.keys(self.miners)]
+
                 if len(miner_targets) <= 0:
                     miner_targets = []
                 unworked_sources = [s for s in self.sources
-                                   if not miner_targets.includes(s.id)]
+                                   if s != undefined and not miner_targets.includes(s.id)]
                 if len(unworked_sources) > 0:
-                    console.log(234234)
                     self.spawn_creep(REMOTE_MINER, {'room': self._name,
-                                                    'source': unworked_sources[0]} )
+                                                    'source': unworked_sources[0].id} )
 
             # get number of carries
             # spawn more carries if carries < miners
             else:
-                num_carriers = len(self.carriers)
+                num_carriers = len(Object.keys(self.carriers))
+                console.log('num_carriers: ', num_carriers)
                 if num_carriers < num_miners:
-                    carry_targets = [c.target for c in self.carriers]
-                    if len(carry_targets) > 0:
-                        unworked_sources = [s for s in self.sources
-                                            if not carry_targets.includes(s.id)]
-                        if len(unworked_sources) > 0:
-                            self.spawn_creep(REMOTE_CARRIER, {'room': self._name,
-                                                              'source': unworked_sources[0]} )
+                    carry_targets = [self.carriers[c].source for c in Object.keys(self.carriers)]
+                    if len(carry_targets) <= 0:
+                        carry_targets = []
+                    unworked_sources = [s for s in self.sources
+                                        if s != undefined and not carry_targets.includes(s.id)]
+                    if len(unworked_sources) > 0:
+                        console.log(unworked_sources[0].id)
+                        self.spawn_creep(REMOTE_CARRIER, {'room': self._name,
+                                                          'source': unworked_sources[0].id,
+                                                          'storage': self.hive.storage.id,
+                                                          'hive': self.hive._name} )
 
                 # check if there is defender
                 else:
-                    if len(self.defender) <= 0 :
+                    console.log('num_defenders', len(Object.keys(self.defenders)))
+                    if len(Object.keys(self.defenders)) <= 0:
                         # spawn defender if there isnt one
                         self.spawn_creep(REMOTE_DEFENDER, {'room': self._name} )
+                    else:
+                        if len(Object.keys(self.builders)) <= 0:
+                            self.spawn_creep(REMOTE_BUILDER, {'room': self._name} )
 
     def spawn_creep(self, creep_type, memory):
         spawn = self.hive.get_idle_spawn()
@@ -111,28 +127,28 @@ class RemoteMineController:
         :return:
         """
         claimer = None
-        for c in self.claimer:
+        for c in Object.keys(self.claimers):
             claimer = Game.creeps[c]
-        if claimer:
-            # check if were in the mining room
-            if claimer.room.name != self._name:
-                # if not find a route to there
-                exit_dir = claimer.room.findExitTo(self._name)
-                if exit_dir:
-                    room_exit = claimer.pos.findClosestByRange(exit_dir)
-                    if room_exit:
-                        claimer.moveTo(room_exit)
-            else:
-                # scout for objects if they dont exist in memory
-                if not self.memory.sources:
-                    self.sources = claimer.room.find(FIND_SOURCES)
-                    if self.sources:
-                        self.memory.sources = [s.id for s in self.sources]
-                if not self.memory.controller:
-                    self.controller = claimer.room.controller
-                    if self.controller:
-                        self.memory.controller = self.controller.id
-                # moveTo and reserve the room controller
-                res = claimer.reserveController(self.controller)
-                if res == ERR_NOT_IN_RANGE:
-                    claimer.moveTo(self.controller)
+            if claimer:
+                # check if were in the mining room
+                if claimer.room.name != self._name:
+                    # if not find a route to there
+                    exit_dir = claimer.room.findExitTo(self._name)
+                    if exit_dir:
+                        room_exit = claimer.pos.findClosestByRange(exit_dir)
+                        if room_exit:
+                            claimer.moveTo(room_exit)
+                else:
+                    # scout for objects if they dont exist in memory
+                    if not self.memory.sources:
+                        self.sources = claimer.room.find(FIND_SOURCES)
+                        if self.sources:
+                            self.memory.sources = [s.id for s in self.sources]
+                    if not self.memory.controller:
+                        self.controller = claimer.room.controller
+                        if self.controller:
+                            self.memory.controller = self.controller.id
+                    # moveTo and reserve the room controller
+                    res = claimer.reserveController(self.controller)
+                    if res == ERR_NOT_IN_RANGE:
+                        claimer.moveTo(self.controller)

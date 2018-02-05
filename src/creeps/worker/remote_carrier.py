@@ -31,6 +31,36 @@ class RemoteCarrier(Worker):
                     room_exit = self.creep.pos.findClosestByRange(exit_dir)
                     if room_exit:
                         self.creep.moveTo(room_exit)
+            else:
+                resources = None
+                res = self.creep.memory.resources
+                if res:
+                    resources = Game.getObjectById(res)
+                if not resources:
+                    src = self.creep.memory.source
+                    if src:
+                        source = Game.getObjectById(src)
+                        if source:
+                            resources = source.pos.findClosestByRange(FIND_DROPPED_RESOURCES)
+                            if resources:
+                                self.creep.memory.resources = resources.id
+                if resources:
+                    self.creep.moveTo(resources)
+                    self.creep.pickup(resources)
+        else:
+            if self.creep.room.name != self.creep.memory.hive:
+                exit_dir = self.creep.room.findExitTo(self.creep.memory.hive)
+                if exit_dir:
+                    room_exit = self.creep.pos.findClosestByRange(exit_dir)
+                    if room_exit:
+                        self.creep.moveTo(room_exit)
+            else:
+                sto = self.creep.memory.storage
+                if sto:
+                    storage = Game.getObjectById(sto)
+                    if storage:
+                        self.creep.moveTo(storage)
+                        self.creep.transfer(storage, RESOURCE_ENERGY)
 
     def _get_source(self):
         pass

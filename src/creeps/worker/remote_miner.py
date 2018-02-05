@@ -48,17 +48,19 @@ class RemoteMiner(Worker):
         source_container = None
         source = None
         src = self.creep.memory.source
-        if self.creep.memory.room == self.creep.room:
+        if self.creep.memory.room == self.creep.room.name:
             if src:
                 s = Game.getObjectById(src)
-                if not s.structureType == STRUCTURE_CONTAINER:
-                    source = s
-                if not self.creep.memory.source_container:
-                    containers = source.pos.findInRange(FIND_STRUCTURES, 2).filter(
-                        lambda struct: struct.structureType == STRUCTURE_CONTAINER
-                    )
-                    if len(containers) > 0:
-                        source_container = containers[0]
-                        self.creep.memory.source_container = source_container.id
+                if s:
+                    if not s.structureType == STRUCTURE_CONTAINER:
+                        source = s
+                    if not self.creep.memory.source_container:
+                        containers = source.pos.findInRange(FIND_STRUCTURES, 2).filter(
+                            lambda struct: struct.structureType == STRUCTURE_CONTAINER
+                        )
+                        if containers:
+                            if len(containers) > 0:
+                                source_container = containers[0]
+                                self.creep.memory.source_container = source_container.id
         if source:
             return source

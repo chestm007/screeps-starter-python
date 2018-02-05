@@ -94,13 +94,13 @@ def try_create_creep(spawn, cache):
                     (
                                     num_workers < max_workers
                             and spawn.room.energyAvailable >= spawn.room.energyCapacityAvailable)):
-                create_creep(WORKER, spawn)
+                create_creep(WORKER, spawn, {'role': Harvester.role})
             if num_workers >= min_workers:
                 # Ensure number of miners = number of resource points
                 num_miners = _.sum(Game.creeps, lambda c: c.pos.roomName == spawn.pos.roomName and
                                                           (c.memory.role == MINER))
                 if num_miners < len(spawn.room.find(FIND_SOURCES)):
-                    create_creep(MINER, spawn)
+                    create_creep(MINER, spawn, {'role': Miner.role})
 
                 # ensure number of carriers is max_carriers if set, or = number of miners
                 num_carriers = _.sum(Game.creeps, lambda c: c.pos.roomName == spawn.pos.roomName and
@@ -108,7 +108,7 @@ def try_create_creep(spawn, cache):
                 if not max_carriers:
                     max_carriers = num_miners
                 if num_carriers < max_carriers:
-                    create_creep(CARRIER, spawn)
+                    create_creep(CARRIER, spawn, {'role': Carrier.role})
 
                 # if spawn.room.storage:
                 #     if spawn.room.storage.store[RESOURCE_ENERGY] > 20000:

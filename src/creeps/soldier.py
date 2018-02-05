@@ -56,20 +56,33 @@ class RemoteDefender(Soldier):
     ]
 
     def run_creep(self):
-        target = self._get_target()
-        if target:
-            self.creep.moveTo(target)
-            self.creep.attack(target)
+        if self.creep.room.name != self.creep.memory.room:
+            exit_dir = self.creep.room.findExitTo(self.creep.memory.room)
+            if exit_dir:
+                room_exit = self.creep.pos.findClosestByRange(exit_dir)
+                if room_exit:
+                    self.creep.moveTo(room_exit)
+        else:
+            target = self._get_target()
+            if target:
+                self.creep.moveTo(target)
+                self.creep.attack(target)
+            else:
+                controller = self.creep.room.controller
+                if controller:
+                    self.creep.moveTo(controller)
+
 
     def _get_target(self):
         target = Game.getObjectById(self.creep.memory.target)
         if not target:
-            if self.creep.memory.room == self.creep.room:
-                hostiles = self.creep.room.find(FIND_HOSTILE_CREEPS)
-                if hostiles:
-                    target = self.get_closest_to_creep(
-                        hostiles
-                    )
+            if Game.tick % 5 == 0:
+                if self.creep.memory.room == self.creep.room:
+                    hostiles = self.creep.room.find(FIND_HOSTILE_CREEPS)
+                    if hostiles:
+                        target = self.get_closest_to_creep(
+                            hostiles
+                        )
         if target:
             self.creep.memory.target = target.id
             return target

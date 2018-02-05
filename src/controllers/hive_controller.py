@@ -21,6 +21,10 @@ class HiveController:
         self.tower_controller.run_towers()
         spawns = [Game.spawns[spawn] for spawn in Object.keys(Game.spawns)]
         self.spawns = _.filter(spawns, lambda s: s.room.name == self._name)
+        if self.room.storage:
+            self.storage = self.room.storage
+        else:
+            self.storage = None
 
         if not self.memory.remote_mines:
             self.memory.remote_mines = {}
@@ -29,8 +33,9 @@ class HiveController:
         ]
 
     def run(self):
-        for remote_mine in self.remote_mines:
-            remote_mine.run()
+        if self.storage:
+            for remote_mine in self.remote_mines:
+                remote_mine.run()
 
     def get_idle_spawn(self):
         for spawn in self.spawns:

@@ -259,14 +259,14 @@ class Harvester(Worker):
             target = Game.getObjectById(self.creep.memory.target)
         else:
             # fill extentions and spawns first
-            target = self.get_closest_to_creep(
-                self.structures_in_room.filter(
-                    lambda s: (
-                                  s.structureType == STRUCTURE_EXTENSION
-                                  or s.structureType == STRUCTURE_SPAWN
-                                  or s.structureType == STRUCTURE_TOWER
-                              ) and s.energy < s.energyCapacity
-                ))
+            #target = self.get_closest_to_creep(
+            #    self.structures_in_room.filter(
+            #        lambda s: (
+            #                      s.structureType == STRUCTURE_EXTENSION
+            #                      or s.structureType == STRUCTURE_SPAWN
+            #                      or s.structureType == STRUCTURE_TOWER
+            #                  ) and s.energy < s.energyCapacity
+            #    ))
             if not target:
                 # Get a random new target.
                 target = _(self.structures_in_room).filter(

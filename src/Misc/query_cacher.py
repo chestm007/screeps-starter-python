@@ -15,7 +15,6 @@ class Cache:
         self.rooms = {}
         self.creeps = []
 
-
     def add_creep_to_cache(self, creep):
         self.creeps.append(creep)
 
@@ -26,17 +25,10 @@ class Cache:
         return self.rooms[room.name]
 
 
-
 class RoomCache:
     def __init__(self, room: Room):
         self.room = room
         self.spawn = None
-        self.associated_remote_mines = None
-        if Object.keys(Memory.rooms).includes(self.room.name):
-            if Memory.rooms[self.room.name].spawn:
-                self.spawn = Game.spawns[Memory.rooms[self.room.name].spawn]
-                if self.spawn:
-                    self.associated_remote_mines = [flag.name for flag in self.spawn.pos.lookFor(LOOK_FLAGS)]
         self.structures = None
         self.construction_sites = None
         self.resources = None

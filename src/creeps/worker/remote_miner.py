@@ -45,7 +45,6 @@ class RemoteMiner(Worker):
             self.creep.harvest(source)
 
     def _get_source(self):
-        source_container = None
         source = None
         src = self.creep.memory.source
         if self.creep.memory.room == self.creep.room.name:

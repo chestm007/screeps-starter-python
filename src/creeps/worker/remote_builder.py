@@ -15,8 +15,8 @@ class RemoteBuilder(Worker):
     role = 'remote_builder'
 
     body_composition = [
-        [WORK,
-         CARRY, CARRY, CARRY, CARRY,
+        [WORK, WORK,
+         CARRY, CARRY, CARRY, CARRY, CARRY, CARRY,
          MOVE, MOVE, MOVE, MOVE],
     ]
 

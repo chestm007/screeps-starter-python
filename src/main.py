@@ -1,4 +1,3 @@
-import creep_factory
 # defs is a package which claims to export all constants and some JavaScript objects, but in reality does
 #  nothing. This is useful mainly when using an editor like PyCharm, so that it 'knows' that things like Object, Creep,
 #  Game, etc. do exist.
@@ -34,12 +33,6 @@ def main():
     cacher = Cache()
     for creep_name in Object.keys(Game.creeps):
         cacher.add_creep_to_cache(Game.creeps[creep_name])
-    # console.log('missing remote creeps')
-    # console.log('builders: ', cacher.miss_builders)
-    # console.log('claimers: ', cacher.miss_claimers)
-    # console.log('carriers: ', cacher.miss_carriers)
-    # console.log('miners: ', cacher.miss_miners)
-    # console.log('defenders: ', cacher.miss_defenders)
 
     if not Memory.rooms:
         Memory.rooms = {}
@@ -50,17 +43,16 @@ def main():
             del Memory.creeps[creep_name]
 
 
-    # Run each tower (shoot things and heal stuff)
+    # Run each hive.
     for room_name in Object.keys(Memory.rooms):
-        hive_controller = HiveController(room_name)
+        if not Memory.rooms[room_name]:
+            Memory.rooms[room_name] = {}
+        hive_controller = HiveController(room_name, cacher)
         hive_controller.run()
-    # Run each spawn (replace dead creeps with moar minions)
-    # TODO: move to HiveController()
-    for name in Object.keys(Game.spawns):
-        creep_factory.try_create_creep(Game.spawns[name], cacher)
 
     # Run each creep
     # TODO: move to HiveController()
+    # TODO: TO BE DONE ONLY AFTER THE NEXT DEPLOYMENT SO ALL CREEPS HAVE A memory.hive ATTRIBUTE!
     creep_controller = CreepController(cacher)
     creep_controller.run_creeps()
     creep_controller.say_roles()

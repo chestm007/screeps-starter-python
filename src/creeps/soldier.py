@@ -72,7 +72,6 @@ class RemoteDefender(Soldier):
                 if controller:
                     self.creep.moveTo(controller)
 
-
     def _get_target(self):
         target = Game.getObjectById(self.creep.memory.target)
         if not target:
@@ -83,9 +82,9 @@ class RemoteDefender(Soldier):
                         target = self.get_closest_to_creep(
                             hostiles
                         )
-        if target:
-            self.creep.memory.target = target.id
-            return target
+                        if target:
+                            self.creep.memory.target = target.id
+        return target
 
 
 class Sumo(Soldier):

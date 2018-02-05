@@ -1,5 +1,4 @@
-import creep_factory
-from creep_factory import CLAIMER, REMOTE_DEFENDER, REMOTE_MINER, REMOTE_CARRIER, REMOTE_BUILDER
+from controllers.hive_controller import CLAIMER, REMOTE_DEFENDER, REMOTE_MINER, REMOTE_CARRIER, REMOTE_BUILDER
 from defs import *
 
 __pragma__('noalias', 'name')
@@ -55,8 +54,10 @@ class RemoteMineController:
         # check if we have a claimer already
         if len(Object.keys(self.claimers)) <= 0:
             # if not spawn one
-            self.spawn_creep(CLAIMER, {'room': self._name} )
-        console.log('num_claimers', len(Object.keys(self.claimers)))
+            # TODO: if reserve time is > 4000 ticks we should spawn a claimer
+            # TODO: with only 1 CLAIM part
+            self.spawn_creep(CLAIMER, {'room': self._name,
+                                       'hive': self.hive._name})
 
         self.run_claimer()
 
@@ -72,8 +73,6 @@ class RemoteMineController:
             num_sources = len(Object.keys(self.sources))
             # get number of miners
             num_miners = len(Object.keys(self.miners))
-            console.log('num_sources', num_sources)
-            console.log('num_miners', num_miners)
             # spawn more miners if miners < sources
             if num_miners < num_sources:
                 miner_targets = [self.miners[c].source for c in Object.keys(self.miners)]
@@ -84,13 +83,13 @@ class RemoteMineController:
                                    if s != undefined and not miner_targets.includes(s.id)]
                 if len(unworked_sources) > 0:
                     self.spawn_creep(REMOTE_MINER, {'room': self._name,
-                                                    'source': unworked_sources[0].id} )
+                                                    'source': unworked_sources[0].id,
+                                                    'hive': self.hive._name})
 
             # get number of carries
             # spawn more carries if carries < miners
             else:
                 num_carriers = len(Object.keys(self.carriers))
-                console.log('num_carriers: ', num_carriers)
                 if num_carriers < num_miners:
                     carry_targets = [self.carriers[c].source for c in Object.keys(self.carriers)]
                     if len(carry_targets) <= 0:
@@ -102,31 +101,32 @@ class RemoteMineController:
                         self.spawn_creep(REMOTE_CARRIER, {'room': self._name,
                                                           'source': unworked_sources[0].id,
                                                           'storage': self.hive.storage.id,
-                                                          'hive': self.hive._name} )
+                                                          'hive': self.hive._name})
 
                 # check if there is defender
                 else:
-                    console.log('num_defenders', len(Object.keys(self.defenders)))
                     if len(Object.keys(self.defenders)) <= 0:
                         # spawn defender if there isnt one
-                        self.spawn_creep(REMOTE_DEFENDER, {'room': self._name} )
+                        self.spawn_creep(REMOTE_DEFENDER, {'room': self._name,
+                                                           'hive': self.hive._name})
                     else:
                         if len(Object.keys(self.builders)) <= 0:
-                            self.spawn_creep(REMOTE_BUILDER, {'room': self._name} )
+                            self.spawn_creep(REMOTE_BUILDER, {'room': self._name,
+                                                              'hive': self.hive._name})
 
     def spawn_creep(self, creep_type, memory):
-        spawn = self.hive.get_idle_spawn()
-        if spawn:
-            creep_factory.create_creep(creep_type,
+        if self.hive.all_spawned:
+            spawn = self.hive.get_idle_spawn()
+            if spawn:
+                self.hive.create_creep(creep_type,
                                        spawn,
                                        memory)
 
     def run_claimer(self):
         """
-        stub: send claimer into room to reserve it and scout for sources
+        send claimer into room to reserve it and scout for sources
         :return:
         """
-        claimer = None
         for c in Object.keys(self.claimers):
             claimer = Game.creeps[c]
             if claimer:

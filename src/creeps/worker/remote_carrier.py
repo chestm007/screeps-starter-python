@@ -10,6 +10,7 @@ __pragma__('noalias', 'set')
 __pragma__('noalias', 'type')
 __pragma__('noalias', 'update')
 
+
 class RemoteCarrier(Worker):
     role = 'remote_carrier'
     body_composition = [

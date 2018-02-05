@@ -10,6 +10,7 @@ __pragma__('noalias', 'set')
 __pragma__('noalias', 'type')
 __pragma__('noalias', 'update')
 
+
 class Carrier(Worker):
     role = 'carrier'
     body_composition = [
@@ -42,20 +43,20 @@ class Carrier(Worker):
             if source and source.structureType == STRUCTURE_STORAGE:
                 del self.creep.memory.source
         else:
-            miner_containers = [
-                Game.getObjectById(Memory.creeps[miner].source_container)
-                for miner in Object.keys(Game.creeps)
-                if Memory.creeps[miner].role == 'miner' and Game.creeps[miner].room == self.creep.room]
-
-            miner_containers = [
-                container for container in miner_containers
-                if container
-                and container.store[RESOURCE_ENERGY] > self.creep.carryCapacity * 2]
-
+            source = _(self.dropped_resources_in_room.filter(
+                lambda r: r.resourceType == RESOURCE_ENERGY and r.amount >= 100
+            )).sample()
             if not source:
-                source = _(self.dropped_resources_in_room.filter(
-                    lambda r: r.resourceType == RESOURCE_ENERGY and r.amount >= self.creep.carryCapacity
-                )).sample()
+                miner_containers = [
+                    Game.getObjectById(Memory.creeps[miner].source_container)
+                    for miner in Object.keys(Game.creeps)
+                    if Memory.creeps[miner].role == 'miner' and Game.creeps[miner].room == self.creep.room]
+
+                miner_containers = [
+                    container for container in miner_containers
+                    if container
+                    and container.store[RESOURCE_ENERGY] > self.creep.carryCapacity * 1.3]
+
             if source:
                 self.creep.memory.source = source.id
             if miner_containers:

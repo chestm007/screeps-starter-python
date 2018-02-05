@@ -49,10 +49,10 @@ CREEP_FACTORY_MAP = {
 
 
 def create_creep(creep_type, spawn, memory):
-    console.log(memory == undefined)
     if memory == undefined:
-        memory = {}
-    CREEP_FACTORY_MAP[creep_type](spawn, memory)
+        console.log('attempted to create a creep with no memory!: type: {}, spawn:{}'.format(creep_type, spawn.name))
+        return
+    return CREEP_FACTORY_MAP[creep_type](spawn, memory)
 
 
 def try_create_creep(spawn, cache):

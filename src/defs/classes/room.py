@@ -43,6 +43,9 @@ class RoomPosition:
             -> List[RoomObject]:
         pass
 
+    def findPathTo(self, target: 'RoomPosition', opts: dict = None) -> list:
+        pass
+
     def getDirectionTo(self, x: Union[int, 'RoomPosition', RoomObject], y: int = None) -> int:
         pass
 

@@ -35,19 +35,21 @@ class CreepController(object):
         RemoteDefender.role: RemoteDefender
     }
 
-    def __init__(self, cache):
-        self.creeps = []  # type: list(Creep(), )
+    def __init__(self, hive, creeps, cache):
+        self.creeps = self.initialize_creeps(creeps)  # type: list(Creep(), )
         self.cache = cache
-        self.initialize_creeps()
+        self.hive = hive
 
-    def initialize_creeps(self):
-        self.creeps = []
-        for name in Object.keys(Game.creeps):
+    def initialize_creeps(self, creeps):
+        creeps = []
+        for name in Object.keys(creeps):
             creep = Game.creeps[name]
-            if not creep.spawning:
-                creep_class = self.get_creep_object_from_type(creep)
-                if creep_class:
-                    self.creeps.append(self.creep_type_map[creep.memory.role](self, creep))
+            if creep:
+                if not creep.spawning:
+                    creep_class = self.get_creep_object_from_type(creep)
+                    if creep_class:
+                        self.creeps.append(self.creep_type_map[creep.memory.role](self, creep, self.hive))
+        return creeps
 
     def run_creeps(self):
         for creep in self.creeps:

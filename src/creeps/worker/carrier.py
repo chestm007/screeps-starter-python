@@ -85,6 +85,16 @@ class Carrier(Worker):
 
         target = self.get_closest_to_creep(
             self.structures_in_room.filter(
+                lambda s: s.structureType == STRUCTURE_TOWER
+                          and s.energy < s.energyCapacity * 0.7
+            )
+        )
+        if target:
+            self.creep.memory.target = target.id
+            return target
+
+        target = self.get_closest_to_creep(
+            self.structures_in_room.filter(
                 lambda s: (
                               s.structureType == STRUCTURE_EXTENSION
                               or s.structureType == STRUCTURE_SPAWN
@@ -94,20 +104,10 @@ class Carrier(Worker):
             self.creep.memory.target = target.id
             return target
 
-        target = self.get_closest_to_creep(
-            self.structures_in_room.filter(
-                lambda s: s.structureType == STRUCTURE_TOWER
-                and s.energy < s.energyCapacity * 0.7
-            )
-        )
-        if target:
-            self.creep.memory.target = target.id
-            return target
-
         containers = [Memory.creeps[creep].source_container for creep in Object.keys(Game.creeps)]
         unmined_containers = self.structures_in_room.filter(
             lambda s: (s.structureType == STRUCTURE_CONTAINER or s.structureType == STRUCTURE_STORAGE)
-                      and not containers.includes(s.id) and s.store[RESOURCE_ENERGY] < s.storeCapacity*0.7
+                       and not containers.includes(s.id) and s.store[RESOURCE_ENERGY] < s.storeCapacity*0.7
         )
         if unmined_containers:
             target = sorted(unmined_containers,

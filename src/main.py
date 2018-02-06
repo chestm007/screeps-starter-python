@@ -1,8 +1,8 @@
 # defs is a package which claims to export all constants and some JavaScript objects, but in reality does
 #  nothing. This is useful mainly when using an editor like PyCharm, so that it 'knows' that things like Object, Creep,
 #  Game, etc. do exist.
+from Misc.path_cacher import PathCache
 from Misc.query_cacher import Cache
-from controllers.creep_controller import CreepController
 from controllers.hive_controller import HiveController
 from defs import *
 
@@ -34,6 +34,8 @@ def main():
     for creep_name in Object.keys(Game.creeps):
         cacher.add_creep_to_cache(Game.creeps[creep_name])
 
+    path_cache = PathCache()
+
     if not Memory.rooms:
         Memory.rooms = {}
 
@@ -47,14 +49,7 @@ def main():
     for room_name in Object.keys(Memory.rooms):
         if not Memory.rooms[room_name]:
             Memory.rooms[room_name] = {}
-        hive_controller = HiveController(room_name, cacher)
+        hive_controller = HiveController(room_name, cacher, path_cache)
         hive_controller.run()
-
-    # Run each creep
-    # TODO: move to HiveController()
-    # TODO: TO BE DONE ONLY AFTER THE NEXT DEPLOYMENT SO ALL CREEPS HAVE A memory.hive ATTRIBUTE!
-    creep_controller = CreepController(cacher)
-    creep_controller.run_creeps()
-    creep_controller.say_roles()
 
 module.exports.loop = main

@@ -33,15 +33,15 @@ class RemoteMiner(Worker):
             if exit_dir:
                 room_exit = self.creep.pos.findClosestByRange(exit_dir)
                 if room_exit:
-                    self.creep.moveTo(room_exit)
+                    self.move_by_cached_path(room_exit)
         else:
             source = self._get_source()
             if self.creep.memory.source_container:
                 if not self.creep.memory.on_source_container:
-                    self.creep.moveTo(Game.getObjectById(self.creep.memory.source_container))
+                    self.move_by_cached_path(Game.getObjectById(self.creep.memory.source_container))
             if len(self.creep.pos.lookFor(STRUCTURE_CONTAINER)) > 0:
                 self.creep.memory.on_source_container = True
-            self.creep.moveTo(source)
+            self.move_by_cached_path(source)
             self.creep.harvest(source)
 
     def _get_source(self):

@@ -12,20 +12,11 @@ __pragma__('noalias', 'type')
 class Creeps:
     role = None
     body_composition = None
-    body_part_cost = {
-        MOVE: 50,
-        WORK: 100,
-        CARRY: 50,
-        ATTACK: 80,
-        RANGED_ATTACK: 150,
-        HEAL: 250,
-        TOUGH: 10,
-        CLAIM: 600
-    }
 
-    def __init__(self, controller, creep):
+    def __init__(self, controller, creep, hive):
         self.creep = creep
         self.controller = controller
+        self.hive = hive
         self.room_cache = self.controller.cache.get_room_cache(creep.room)
         self.structures_in_room = self.room_cache.get_structures()
         self.construction_sites_in_room = self.room_cache.get_construction_sites()
@@ -37,7 +28,7 @@ class Creeps:
     @staticmethod
     def _calculate_creation_cost(body_composition):
         if body_composition:
-            return sum([Creeps.body_part_cost[part] for part in body_composition])
+            return sum([BODYPART_COST[part] for part in body_composition])
 
     @classmethod
     def factory(cls, spawn, memory):
@@ -53,12 +44,13 @@ class Creeps:
                 memory['role'] = cls.role
                 return Creeps.create(body, spawn, memory)
 
-    @staticmethod
-    def create(body, spawn, memory):
+    @classmethod
+    def create(cls, body, spawn, memory):
         if body is None:
-            console.log('Error creating {}: no defined body composition'.format(role))
+            console.log('Error creating {}: no defined body composition'.format(cls.__name__))
         else:
-            spawn.createCreep(body, None, memory)
+            name = spawn.name + Game.time
+            spawn.spawnCreep(body, name, {'memory': memory})
 
     def run_creep(self):
         console.log('cannot run undefined creep {}'.format(self.creep.name))
@@ -72,3 +64,7 @@ class Creeps:
                 least_distance = distance_to_creep
                 closest = r
         return closest
+
+    def move_by_cached_path(self, target: RoomObject):
+        self.hive.path_cache.get_path(self.creep.pos, target.pos)
+

@@ -97,7 +97,6 @@ class RemoteMineController:
                     unworked_sources = [s for s in self.sources
                                         if s != undefined and not carry_targets.includes(s.id)]
                     if len(unworked_sources) > 0:
-                        console.log(unworked_sources[0].id)
                         self.spawn_creep(REMOTE_CARRIER, {'room': self._name,
                                                           'source': unworked_sources[0].id,
                                                           'storage': self.hive.storage.id,

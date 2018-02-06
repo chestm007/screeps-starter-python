@@ -1,4 +1,4 @@
-from creeps import soldier
+from creeps.soldier.remote_defender import RemoteDefender
 from creeps.worker.claimer import Claimer
 from creeps.worker.remote_builder import RemoteBuilder
 from creeps.worker.remote_carrier import RemoteCarrier
@@ -20,7 +20,7 @@ REMOTE_MINER = RemoteMiner.role
 REMOTE_CARRIER = RemoteCarrier.role
 REMOTE_BUILDER = RemoteBuilder.role
 
-REMOTE_DEFENDER = soldier.RemoteDefender.role
+REMOTE_DEFENDER = RemoteDefender.role
 
 CREEP_FACTORY_MAP = {
     CLAIMER: Claimer.factory,
@@ -28,7 +28,7 @@ CREEP_FACTORY_MAP = {
     REMOTE_CARRIER: RemoteCarrier.factory,
     REMOTE_BUILDER: RemoteBuilder.factory,
 
-    REMOTE_DEFENDER: soldier.RemoteDefender.factory,
+    REMOTE_DEFENDER: RemoteDefender.factory,
 }
 
 

@@ -1,6 +1,9 @@
 from controllers.remote_mine_controller import RemoteMineController
 from controllers.tower_controller import TowerController
-from creeps import soldier
+from creeps.soldier.sumo import Sumo
+from creeps.soldier.soldier import Soldier
+from creeps.soldier.remote_defender import RemoteDefender
+from creeps.worker.hive_claimer import HiveClaimer
 from creeps.worker.worker import Worker, Builder, Harvester
 from creeps.worker.carrier import Carrier
 from creeps.worker.claimer import Claimer
@@ -18,6 +21,7 @@ __pragma__('noalias', 'get')
 __pragma__('noalias', 'set')
 __pragma__('noalias', 'type')
 __pragma__('noalias', 'update')
+__pragma__('noalias', 'pop')
 
 HARVESTER = Harvester.role
 BUILDER = Builder.role
@@ -25,13 +29,14 @@ WORKER = Worker.role
 MINER = Miner.role
 CARRIER = Carrier.role
 CLAIMER = Claimer.role
+HIVE_CLAIMER = HiveClaimer.role
 REMOTE_MINER = RemoteMiner.role
 REMOTE_CARRIER = RemoteCarrier.role
 REMOTE_BUILDER = RemoteBuilder.role
 
-SOLDIER = soldier.Soldier.role
-REMOTE_DEFENDER = soldier.RemoteDefender.role
-SUMO = soldier.Sumo.role
+SOLDIER = Soldier.role
+REMOTE_DEFENDER = RemoteDefender.role
+SUMO = Sumo.role
 
 CREEP_FACTORY_MAP = {
     HARVESTER: Harvester.factory,
@@ -40,13 +45,14 @@ CREEP_FACTORY_MAP = {
     MINER: Miner.factory,
     CARRIER: Carrier.factory,
     CLAIMER: Claimer.factory,
+    HIVE_CLAIMER: HiveClaimer.factory,
     REMOTE_MINER: RemoteMiner.factory,
     REMOTE_CARRIER: RemoteCarrier.factory,
     REMOTE_BUILDER: RemoteBuilder.factory,
 
-    SOLDIER: soldier.Soldier.factory,
-    REMOTE_DEFENDER: soldier.RemoteDefender.factory,
-    SUMO: soldier.Sumo.factory
+    SOLDIER: Soldier.factory,
+    REMOTE_DEFENDER: RemoteDefender.factory,
+    SUMO: Sumo.factory
 }
 
 
@@ -100,6 +106,15 @@ class HiveController:
             if not spawn.spawning:
                 # Get the number of our creeps in the room.
                 if spawn.room.energyAvailable >= 250:
+                    hive_claimers = _.filter(Memory.creeps, lambda c: c.hive == self._name and c.role == HIVE_CLAIMER)
+                    hive_claimer_flags = _.filter(Game.flags, lambda f: f.name.startswith(self._name))
+                    flag = None
+                    if len(Object.keys(hive_claimer_flags)) > 0:
+                        flag = hive_claimer_flags[0]
+                        console.log(len(Object.keys(hive_claimer_flags)))
+                    if len(Object.keys(hive_claimers)) < len(Object.keys(hive_claimer_flags)):
+                        self.create_creep(HIVE_CLAIMER, spawn, {'role': HiveClaimer.role,
+                                                                'hive': self._name})
 
                     num_workers = _.sum(Memory.creeps, lambda c: c.room == spawn.pos.roomName and
                                                                  (c.role == HARVESTER or c.role == BUILDER))

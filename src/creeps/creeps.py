@@ -9,7 +9,7 @@ __pragma__('noalias', 'set')
 __pragma__('noalias', 'type')
 
 
-class Creeps(object):
+class Creeps:
     role = None
     body_composition = None
     body_part_cost = {

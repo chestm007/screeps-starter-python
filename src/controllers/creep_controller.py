@@ -1,3 +1,4 @@
+from creeps.hive_builder import HiveBuilder
 from creeps.soldier.remote_defender import RemoteDefender
 from creeps.worker.hive_claimer import HiveClaimer
 from creeps.worker.worker import Worker, Builder, Harvester
@@ -27,6 +28,7 @@ class CreepController(object):
         Carrier.role: Carrier,
         Claimer.role: Claimer,
         HiveClaimer.role: HiveClaimer,
+        HiveBuilder.role: HiveBuilder,
         RemoteMiner.role: RemoteMiner,
         RemoteCarrier.role: RemoteCarrier,
         RemoteBuilder.role: RemoteBuilder,

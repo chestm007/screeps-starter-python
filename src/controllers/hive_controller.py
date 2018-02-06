@@ -1,5 +1,6 @@
 from controllers.remote_mine_controller import RemoteMineController
 from controllers.tower_controller import TowerController
+from creeps.hive_builder import HiveBuilder
 from creeps.soldier.sumo import Sumo
 from creeps.soldier.soldier import Soldier
 from creeps.soldier.remote_defender import RemoteDefender
@@ -30,6 +31,7 @@ MINER = Miner.role
 CARRIER = Carrier.role
 CLAIMER = Claimer.role
 HIVE_CLAIMER = HiveClaimer.role
+HIVE_BUILDER = HiveBuilder.role
 REMOTE_MINER = RemoteMiner.role
 REMOTE_CARRIER = RemoteCarrier.role
 REMOTE_BUILDER = RemoteBuilder.role
@@ -46,6 +48,7 @@ CREEP_FACTORY_MAP = {
     CARRIER: Carrier.factory,
     CLAIMER: Claimer.factory,
     HIVE_CLAIMER: HiveClaimer.factory,
+    HIVE_BUILDER: HiveBuilder.factory,
     REMOTE_MINER: RemoteMiner.factory,
     REMOTE_CARRIER: RemoteCarrier.factory,
     REMOTE_BUILDER: RemoteBuilder.factory,
@@ -106,15 +109,20 @@ class HiveController:
             if not spawn.spawning:
                 # Get the number of our creeps in the room.
                 if spawn.room.energyAvailable >= 250:
-                    hive_claimers = _.filter(Memory.creeps, lambda c: c.hive == self._name and c.role == HIVE_CLAIMER)
-                    hive_claimer_flags = _.filter(Game.flags, lambda f: f.name.startswith(self._name))
+                    hive_claimer_flags = _.filter(Game.flags, lambda f: f.name == self._name + '_hive_claim')
                     flag = None
                     if len(Object.keys(hive_claimer_flags)) > 0:
-                        flag = hive_claimer_flags[0]
-                        console.log(len(Object.keys(hive_claimer_flags)))
-                    if len(Object.keys(hive_claimers)) < len(Object.keys(hive_claimer_flags)):
-                        self.create_creep(HIVE_CLAIMER, spawn, {'role': HiveClaimer.role,
-                                                                'hive': self._name})
+                        hive_claimers = _.filter(Memory.creeps, lambda c: c.hive == self._name and c.role == HIVE_CLAIMER)
+                        if len(Object.keys(hive_claimers)) < len(Object.keys(hive_claimer_flags)):
+                            self.create_creep(HIVE_CLAIMER, spawn, {'role': HiveClaimer.role,
+                                                                    'flag': hive_claimer_flags[0],
+                                                                    'hive': self._name})
+                        else:
+                            hive_builders = _.filter(Memory.creeps, lambda c: c.hive == self._name and c.role == HIVE_BUILDER)
+                            if len(Object.keys(hive_builders)) < 2:
+                                self.create_creep(HIVE_BUILDER, spawn, {'role': HiveBuilder.role,
+                                                                        'flag': hive_claimer_flags[0],
+                                                                        'hive': self._name})
 
                     num_workers = _.sum(Memory.creeps, lambda c: c.room == spawn.pos.roomName and
                                                                  (c.role == HARVESTER or c.role == BUILDER))

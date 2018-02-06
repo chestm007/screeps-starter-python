@@ -30,10 +30,11 @@ class HiveClaimer(Worker):
                 flag = claim_flags[0]
                 if flag:
                     self.creep.memory.flag = flag.id
-        controller = self.creep.room.controller
-        if controller:
-            self.creep.claimController(controller)
-            self.creep.moveTo(controller)
+        if self.creep.room.name == flag.pos.roomName:
+            controller = self.creep.room.controller
+            if controller:
+                self.creep.claimController(controller)
+                self.creep.moveTo(controller)
         else:
             if flag:
                 self.creep.moveTo(flag)

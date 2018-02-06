@@ -45,7 +45,7 @@ class RemoteCarrier(Worker):
                             if resources:
                                 self.creep.memory.resources = resources.id
                 if resources:
-                    self.creep.moveTo(resources)
+                    self.creep.moveTo(resources, {'maxRooms': 1})
                     self.creep.pickup(resources)
         else:
             if self.creep.room.name != self.creep.memory.hive:
@@ -59,7 +59,7 @@ class RemoteCarrier(Worker):
                 if sto:
                     storage = Game.getObjectById(sto)
                     if storage:
-                        self.creep.moveTo(storage)
+                        self.creep.moveTo(storage, {'maxRooms': 1})
                         self.creep.transfer(storage, RESOURCE_ENERGY)
 
     def _get_source(self):

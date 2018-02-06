@@ -149,7 +149,7 @@ class Worker(Creeps):
             if source.resourceType == RESOURCE_ENERGY:
                 res = self.creep.pickup(source)
                 if res == ERR_NOT_IN_RANGE:
-                    self.creep.moveTo(source)
+                    self.creep.moveTo(source, {'maxRooms': 1})
                 elif res == ERR_NOT_ENOUGH_ENERGY:
                     del self.creep.memory.source
                     self._get_source()
@@ -164,7 +164,7 @@ class Worker(Creeps):
             else:
                 result = self.creep.harvest(source)
                 if result == ERR_NOT_IN_RANGE:
-                    self.creep.moveTo(source)
+                    self.creep.moveTo(source, {'maxRooms': 1})
                 elif result == ERR_NOT_ENOUGH_ENERGY:
                     return
                 elif result != OK:

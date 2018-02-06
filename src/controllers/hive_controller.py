@@ -122,8 +122,8 @@ class HiveController:
 
                             else:
                                 # ensure number of carriers is max_carriers if set, or = number of miners
-                                num_carriers = _.sum(Game.creeps, lambda c: c.room == spawn.pos.roomName and
-                                                                            (c.memory.role == CARRIER))
+                                num_carriers = _.sum(Memory.creeps, lambda c: c.room == spawn.pos.roomName and
+                                                                            (c.role == CARRIER))
                                 if num_carriers < self.max_carriers:
                                     self.create_creep(CARRIER, spawn, {'role': Carrier.role,
                                                                        'room': self._name,

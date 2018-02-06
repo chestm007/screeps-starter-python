@@ -62,7 +62,7 @@ class RemoteBuilder(Worker):
             target = Game.getObjectById(self.creep.memory.target)
         if not target:
             target = self.get_closest_to_creep(
-                self.structures_in_room.filter(lambda s: s.hits < s.hitsMax / 2)
+                self.structures_in_room.filter(lambda s: s.hits < s.hitsMax / 3 * 2)
             )
             if not target:
                 target = self.get_closest_to_creep(

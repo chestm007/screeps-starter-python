@@ -101,11 +101,8 @@ class HiveController:
                 # Get the number of our creeps in the room.
                 if spawn.room.energyAvailable >= 250:
 
-                    num_workers = _.sum(Game.creeps, lambda c: c.pos.roomName == spawn.pos.roomName and
-                                                               (c.memory.role == HARVESTER or c.memory.role == BUILDER))
-                    # TODO: uncomment after release
-                    #num_workers = _.sum(Memory.creeps, lambda c: c.room == spawn.pos.roomName and
-                    #                                             (c.role == HARVESTER or c.role == BUILDER))
+                    num_workers = _.sum(Memory.creeps, lambda c: c.room == spawn.pos.roomName and
+                                                                 (c.role == HARVESTER or c.role == BUILDER))
                     if (num_workers < self.min_workers
                             or (num_workers < self.max_workers
                                 and spawn.room.energyAvailable >= spawn.room.energyCapacityAvailable)):
@@ -116,12 +113,8 @@ class HiveController:
 
                         if num_workers >= self.min_workers:
                             # Ensure number of miners = number of resource points
-                            num_miners = _.sum(Game.creeps, lambda c: c.pos.roomName == spawn.pos.roomName and
-                                                                      (c.memory.role == MINER))
-
-                            # TODO: uncomment after release
-                            # num_miners = _.sum(Memory.creeps, lambda c: c.room == spawn.pos.roomName and
-                            #                                             (c.role == MINER))
+                            num_miners = _.sum(Memory.creeps, lambda c: c.room == spawn.pos.roomName and
+                                                                        (c.role == MINER))
                             if num_miners < len(spawn.room.find(FIND_SOURCES)):
                                 self.create_creep(MINER, spawn, {'role': Miner.role,
                                                                  'room': self._name,
@@ -129,11 +122,8 @@ class HiveController:
 
                             else:
                                 # ensure number of carriers is max_carriers if set, or = number of miners
-                                num_carriers = _.sum(Game.creeps, lambda c: c.pos.roomName == spawn.pos.roomName and
+                                num_carriers = _.sum(Game.creeps, lambda c: c.room == spawn.pos.roomName and
                                                                             (c.memory.role == CARRIER))
-                                # TODO: uncomment after release
-                                # num_carriers = _.sum(Game.creeps, lambda c: c.room == spawn.pos.roomName and
-                                #                                             (c.memory.role == CARRIER))
                                 if num_carriers < self.max_carriers:
                                     self.create_creep(CARRIER, spawn, {'role': Carrier.role,
                                                                        'room': self._name,

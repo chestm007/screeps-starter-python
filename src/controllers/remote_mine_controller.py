@@ -1,4 +1,8 @@
-from controllers.hive_controller import CLAIMER, REMOTE_DEFENDER, REMOTE_MINER, REMOTE_CARRIER, REMOTE_BUILDER
+from creeps import soldier
+from creeps.worker.claimer import Claimer
+from creeps.worker.remote_builder import RemoteBuilder
+from creeps.worker.remote_carrier import RemoteCarrier
+from creeps.worker.remote_miner import RemoteMiner
 from defs import *
 
 __pragma__('noalias', 'name')
@@ -10,6 +14,22 @@ __pragma__('noalias', 'set')
 __pragma__('noalias', 'type')
 __pragma__('noalias', 'update')
 __pragma__('noalias', 'pop')
+
+CLAIMER = Claimer.role
+REMOTE_MINER = RemoteMiner.role
+REMOTE_CARRIER = RemoteCarrier.role
+REMOTE_BUILDER = RemoteBuilder.role
+
+REMOTE_DEFENDER = soldier.RemoteDefender.role
+
+CREEP_FACTORY_MAP = {
+    CLAIMER: Claimer.factory,
+    REMOTE_MINER: RemoteMiner.factory,
+    REMOTE_CARRIER: RemoteCarrier.factory,
+    REMOTE_BUILDER: RemoteBuilder.factory,
+
+    REMOTE_DEFENDER: soldier.RemoteDefender.factory,
+}
 
 
 class RemoteMineController:

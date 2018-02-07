@@ -1,7 +1,7 @@
 from creeps.hive_builder import HiveBuilder
 from creeps.soldier.remote_defender import RemoteDefender
 from creeps.worker.hive_claimer import HiveClaimer
-from creeps.worker.worker import Worker, Builder, Harvester
+from creeps.worker.worker import Builder, Harvester
 from creeps.worker.carrier import Carrier
 from creeps.worker.claimer import Claimer
 from creeps.worker.miner import Miner

@@ -17,7 +17,9 @@ class RemoteDefender(Soldier):
     body_composition = [
         [TOUGH, TOUGH, TOUGH, TOUGH, TOUGH,
          ATTACK, ATTACK, ATTACK, ATTACK, ATTACK,
-         MOVE, MOVE, MOVE, MOVE, MOVE]
+         MOVE, MOVE, MOVE, MOVE, MOVE,
+         MOVE, MOVE, MOVE, MOVE, MOVE,
+         ]
     ]
 
     def run_creep(self):
@@ -40,13 +42,10 @@ class RemoteDefender(Soldier):
     def _get_target(self):
         target = Game.getObjectById(self.creep.memory.target)
         if not target:
-            if Game.tick % 5 == 0:
-                if self.creep.memory.room == self.creep.room:
-                    hostiles = self.creep.room.find(FIND_HOSTILE_CREEPS)
-                    if hostiles:
-                        target = self.get_closest_to_creep(
-                            hostiles
-                        )
-                        if target:
-                            self.creep.memory.target = target.id
+            if Game.time % 3 == 0:
+                if self.creep.memory.room == self.creep.room.name:
+                    target = self.creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS)
+                    if target:
+                        self.creep.memory.target = target.id
+
         return target

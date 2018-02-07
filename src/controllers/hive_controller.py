@@ -104,7 +104,7 @@ class HiveController:
             for remote_mine in self.remote_mines:
                 remote_mine.run()
         self.creep_controller.run_creeps()
-        self.creep_controller.say_roles()
+        # self.creep_controller.say_roles()
 
     def get_idle_spawn(self):
         for spawn in self.spawns:
@@ -126,7 +126,7 @@ class HiveController:
                                                                     'hive': self._name})
                         else:
                             hive_builders = _.filter(self.creeps, lambda c: c.role == HIVE_BUILDER)
-                            if len(Object.keys(hive_builders)) < 2:
+                            if len(Object.keys(hive_builders)) < 4:
                                 self.create_creep(HIVE_BUILDER, spawn, {'role': HiveBuilder.role,
                                                                         'flag': hive_claimer_flags[0],
                                                                         'hive': self._name})

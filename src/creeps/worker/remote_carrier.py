@@ -19,7 +19,9 @@ class RemoteCarrier(Worker):
          CARRY, CARRY, CARRY, CARRY, CARRY,
          CARRY, CARRY, CARRY,
          MOVE, MOVE, MOVE, MOVE, MOVE,
-         MOVE, MOVE, MOVE, MOVE],
+         MOVE, MOVE, MOVE, MOVE, MOVE,
+         MOVE, MOVE, MOVE, MOVE, MOVE,
+         MOVE, MOVE, MOVE],
     ]
 
     def run_creep(self):
@@ -30,7 +32,7 @@ class RemoteCarrier(Worker):
                 if exit_dir:
                     room_exit = self.creep.pos.findClosestByRange(exit_dir)
                     if room_exit:
-                        self.creep.moveTo(room_exit)
+                        self.creep.moveTo(room_exit, {'maxRooms': 1})
             else:
                 resources = None
                 res = self.creep.memory.resources
@@ -47,13 +49,20 @@ class RemoteCarrier(Worker):
                 if resources:
                     self.creep.moveTo(resources, {'maxRooms': 1})
                     self.creep.pickup(resources)
+                else:
+                    src = self.creep.memory.source
+                    if src:
+                        source = Game.getObjectById(src)
+                        if source:
+                            self.creep.moveTo(source, {'maxRooms': 1,
+                                                       'range': 4})
         else:
             if self.creep.room.name != self.creep.memory.hive:
                 exit_dir = self.creep.room.findExitTo(self.creep.memory.hive)
                 if exit_dir:
                     room_exit = self.creep.pos.findClosestByRange(exit_dir)
                     if room_exit:
-                        self.creep.moveTo(room_exit)
+                        self.creep.moveTo(room_exit, {'maxRooms': 1})
             else:
                 sto = self.creep.memory.storage
                 if sto:

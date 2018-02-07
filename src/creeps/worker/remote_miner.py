@@ -15,9 +15,6 @@ class RemoteMiner(Worker):
     role = 'remote_miner'
 
     body_composition = [
-        [WORK, WORK, CARRY, MOVE],
-        [WORK, WORK, WORK, CARRY, MOVE],
-        [WORK, WORK, WORK, CARRY, MOVE],
         [WORK, WORK, WORK, WORK, WORK,
          MOVE, MOVE, MOVE, MOVE, MOVE],
     ]

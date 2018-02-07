@@ -25,15 +25,15 @@ class Worker(Creeps):
          CARRY,
          MOVE, MOVE],
         [WORK, WORK,
-         CARRY,
-         MOVE, MOVE],
-        [WORK, WORK, WORK,
          CARRY, CARRY,
          MOVE, MOVE, MOVE],
+        [WORK, WORK, WORK,
+         CARRY, CARRY, CARRY,
+         MOVE, MOVE, MOVE, MOVE, MOVE],
         [WORK, WORK, WORK, WORK, WORK,
-          WORK, WORK,
-         CARRY, CARRY,
-         MOVE, MOVE, MOVE, MOVE]
+         CARRY, CARRY, CARRY, CARRY, CARRY,
+         MOVE, MOVE, MOVE, MOVE, MOVE,
+         MOVE, MOVE, MOVE, MOVE, MOVE]
     ]
 
     def _pre_run_checks(self):

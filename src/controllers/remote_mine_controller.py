@@ -66,8 +66,8 @@ class RemoteMineController:
                          if Memory.creeps[n].role == REMOTE_CARRIER}
         self.defenders = {n: Memory.creeps[n] for n in Object.keys(self.creeps)
                           if Memory.creeps[n].role == REMOTE_DEFENDER}
-        self.builders = {n: Memory.creeps[n] for n in Object.keys(self.creeps)
-                         if Memory.creeps[n].role == REMOTE_BUILDER}
+        #self.builders = {n: Memory.creeps[n] for n in Object.keys(self.creeps)
+        #                 if Memory.creeps[n].role == REMOTE_BUILDER}
 
     def run(self):
 
@@ -128,10 +128,10 @@ class RemoteMineController:
                         # spawn defender if there isnt one
                         self.spawn_creep(REMOTE_DEFENDER, {'room': self._name,
                                                            'hive': self.hive._name})
-                    else:
-                        if len(Object.keys(self.builders)) <= 0:
-                            self.spawn_creep(REMOTE_BUILDER, {'room': self._name,
-                                                              'hive': self.hive._name})
+                    #else:
+                    #    if len(Object.keys(self.builders)) <= 0:
+                    #        self.spawn_creep(REMOTE_BUILDER, {'room': self._name,
+                    #                                          'hive': self.hive._name})
 
     def spawn_creep(self, creep_type, memory):
         if self.hive.all_spawned:

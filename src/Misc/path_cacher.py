@@ -22,7 +22,7 @@ class PathCache:
         """
         key = self.get_path_key(_from, to)
 
-        cached_path = {'path': path,
+        cached_path = {'path': Room.serializePath(path),
                        'uses': 1}
         self.cache[key] = cached_path
 
@@ -36,7 +36,8 @@ class PathCache:
             cached_path.uses += 1
             return cached_path.path
         else:
-            path = _from.findPathTo(to, {'maxRooms': 1})
+            path = _from.findPathTo(to, {'ignoreCreeps': True,
+                                         'maxRooms': 1})
             if path:
                 self.add_path(_from, to, path)
                 return path

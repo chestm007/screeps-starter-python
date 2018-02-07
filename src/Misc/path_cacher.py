@@ -34,9 +34,9 @@ class PathCache:
         cached_path = self.cache[self.get_path_key(_from, to)]
         if cached_path:
             cached_path.uses += 1
-            return cached_path
+            return cached_path.path
         else:
-            path = _from.findPathTo(to, {'ignoreCreeps': True})
+            path = _from.findPathTo(to, {'maxRooms': 1})
             if path:
                 self.add_path(_from, to, path)
                 return path

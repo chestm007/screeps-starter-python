@@ -66,5 +66,11 @@ class Creeps:
         return closest
 
     def move_by_cached_path(self, target: RoomObject):
-        self.hive.path_cache.get_path(self.creep.pos, target.pos)
+        if target:
+            if target.pos:
+                t = target.pos
+            else:
+                t = target
+            path = self.hive.path_cache.get_path(self.creep.pos, t)
+            self.creep.moveByPath(path)
 

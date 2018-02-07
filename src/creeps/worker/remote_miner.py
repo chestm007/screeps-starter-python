@@ -41,8 +41,9 @@ class RemoteMiner(Worker):
                     self.move_by_cached_path(Game.getObjectById(self.creep.memory.source_container))
             if len(self.creep.pos.lookFor(STRUCTURE_CONTAINER)) > 0:
                 self.creep.memory.on_source_container = True
-            self.move_by_cached_path(source)
-            self.creep.harvest(source)
+            if source:
+                self.move_by_cached_path(source)
+                self.creep.harvest(source)
 
     def _get_source(self):
         source = None

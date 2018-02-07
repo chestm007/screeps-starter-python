@@ -36,9 +36,6 @@ def main():
 
     path_cache = PathCache()
 
-    if not Memory.rooms:
-        Memory.rooms = {}
-
     # remove dead creeps from memory (we dont care about the dead!)
     for creep_name in Object.keys(Memory.creeps):
         if not Object.keys(Game.creeps).includes(creep_name):

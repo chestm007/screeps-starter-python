@@ -50,7 +50,7 @@ class PathCache:
         self.clean_cache_by_usage(1)
 
     def clean_cache_by_usage(self, usage: int) -> None:
-        if _.size(self.cache) > 1500:  # ~150kb
+        if _.size(self.cache) > 3000:  # ~300kb
             console.log('Cleaning path cache (usage == '+str(usage)+')...')
             counter = 0
             for key in Object.keys(self.cache):

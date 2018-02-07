@@ -141,7 +141,7 @@ class Worker(Creeps):
         if source.structureType == STRUCTURE_CONTAINER or source.structureType == STRUCTURE_STORAGE:
             res = self.creep.withdraw(source, RESOURCE_ENERGY)
             if res == ERR_NOT_IN_RANGE:
-                self.creep.moveTo(source)
+                self.creep.moveTo(source, {'maxRooms': 1})
             elif res == ERR_NOT_ENOUGH_ENERGY or ERR_NOT_ENOUGH_RESOURCES:
                 del self.creep.memory.source
                 self._get_source()
@@ -258,15 +258,18 @@ class Harvester(Worker):
         if self.creep.memory.target:
             target = Game.getObjectById(self.creep.memory.target)
         else:
-            # fill extentions and spawns first
-            #target = self.get_closest_to_creep(
-            #    self.structures_in_room.filter(
-            #        lambda s: (
-            #                      s.structureType == STRUCTURE_EXTENSION
-            #                      or s.structureType == STRUCTURE_SPAWN
-            #                      or s.structureType == STRUCTURE_TOWER
-            #                  ) and s.energy < s.energyCapacity
-            #    ))
+            num_carriers = _.sum(self.hive.creeps, lambda c: c.room == self.creep.room.name and
+                                                            (c.role == 'carrier'))
+            if num_carriers <= 0:
+                # fill extentions and spawns first
+                target = self.get_closest_to_creep(
+                    self.structures_in_room.filter(
+                        lambda s: (
+                                      s.structureType == STRUCTURE_EXTENSION
+                                      or s.structureType == STRUCTURE_SPAWN
+                                      or s.structureType == STRUCTURE_TOWER
+                                  ) and s.energy < s.energyCapacity
+                    ))
             if not target:
                 # Get a random new target.
                 target = _(self.structures_in_room).filter(
@@ -302,13 +305,13 @@ class Builder(Worker):
                         self._get_target()
                     res = self.creep.repair(target)
                     if res == ERR_NOT_IN_RANGE:
-                        self.creep.moveTo(target)
+                        self.creep.moveTo(target, {'maxRooms': 1})
                         return
                     elif res == OK:
                         return
                 res = self.creep.build(target)
                 if res == ERR_NOT_IN_RANGE:
-                    self.creep.moveTo(target)
+                    self.creep.moveTo(target, {'maxRooms': 1})
                     return
                 elif res == OK:
                     return

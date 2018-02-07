@@ -19,6 +19,10 @@ class Cache:
         self.creeps.append(creep)
 
         if not self.rooms[creep.room.name]:
+            if not Memory.rooms[creep.room.name]:
+                if creep.room.controller:
+                    if creep.room.controller.my:
+                        Memory.rooms[creep.room.name] = {}
             self.rooms[creep.room.name] = RoomCache(creep.room)
 
     def get_room_cache(self, room):

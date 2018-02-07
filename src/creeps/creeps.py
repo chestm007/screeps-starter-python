@@ -23,8 +23,6 @@ class Creeps:
         self.resources_in_room = self.room_cache.get_resources()
         self.dropped_resources_in_room = self.room_cache.get_dropped_resources()
 
-    num_creep_to_size = ['small', 'small', 'medium', 'medium', 'large', 'xlarge']
-
     @staticmethod
     def _calculate_creation_cost(body_composition):
         if body_composition:

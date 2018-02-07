@@ -16,6 +16,12 @@ class RemoteCarrier(Worker):
     body_composition = [
         [CARRY, CARRY, CARRY, CARRY, CARRY,
          CARRY, CARRY, CARRY, CARRY, CARRY,
+         CARRY, CARRY, CARRY,
+         MOVE, MOVE, MOVE, MOVE, MOVE,
+         MOVE, MOVE, MOVE, MOVE, MOVE,
+         MOVE, MOVE, MOVE],
+        [CARRY, CARRY, CARRY, CARRY, CARRY,
+         CARRY, CARRY, CARRY, CARRY, CARRY,
          CARRY, CARRY, CARRY, CARRY, CARRY,
          CARRY, CARRY, CARRY,
          MOVE, MOVE, MOVE, MOVE, MOVE,
@@ -32,7 +38,7 @@ class RemoteCarrier(Worker):
                 if exit_dir:
                     room_exit = self.creep.pos.findClosestByRange(exit_dir)
                     if room_exit:
-                        self.creep.moveTo(room_exit, {'maxRooms': 1})
+                        self.move_by_cached_path(room_exit)
             else:
                 resources = None
                 res = self.creep.memory.resources
@@ -47,7 +53,7 @@ class RemoteCarrier(Worker):
                             if resources:
                                 self.creep.memory.resources = resources.id
                 if resources:
-                    self.creep.moveTo(resources, {'maxRooms': 1})
+                    self.move_by_cached_path(resources)
                     self.creep.pickup(resources)
                 else:
                     src = self.creep.memory.source
@@ -62,7 +68,7 @@ class RemoteCarrier(Worker):
                 if exit_dir:
                     room_exit = self.creep.pos.findClosestByRange(exit_dir)
                     if room_exit:
-                        self.creep.moveTo(room_exit, {'maxRooms': 1})
+                        self.move_by_cached_path(room_exit)
             else:
                 sto = self.creep.memory.storage
                 if sto:

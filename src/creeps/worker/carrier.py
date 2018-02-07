@@ -85,6 +85,15 @@ class Carrier(Worker):
 
         target = self.get_closest_to_creep(
             self.structures_in_room.filter(
+                lambda s: s.structureType == STRUCTURE_TOWER
+                          and s.energy < 100
+            )
+        )
+        if target:
+            self.creep.memory.target = target.id
+            return target
+        target = self.get_closest_to_creep(
+            self.structures_in_room.filter(
                 lambda s: (
                               s.structureType == STRUCTURE_EXTENSION
                               or s.structureType == STRUCTURE_SPAWN

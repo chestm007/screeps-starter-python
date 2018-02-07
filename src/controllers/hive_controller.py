@@ -116,8 +116,9 @@ class HiveController:
             if not spawn.spawning:
                 # Get the number of our creeps in the room.
                 if spawn.room.energyAvailable >= 250:
+                        #hive_claimers = _.filter(self.creeps, lambda c: c.role == )
+
                     hive_claimer_flags = _.filter(Game.flags, lambda f: f.name == self._name + '_hive_claim')
-                    flag = None
                     if len(Object.keys(hive_claimer_flags)) > 0:
                         hive_claimers = _.filter(self.creeps, lambda c: c.role == HIVE_CLAIMER)
                         if len(Object.keys(hive_claimers)) < len(Object.keys(hive_claimer_flags)):
@@ -154,12 +155,23 @@ class HiveController:
                                 # ensure number of carriers is max_carriers if set, or = number of miners
                                 num_carriers = _.sum(self.creeps, lambda c: c.room == spawn.pos.roomName and
                                                                             (c.role == CARRIER))
-                                if num_carriers < self.max_carriers:
+                                if num_carriers < self.max_carriers and self.room.energyAvailable >= self.room.controller.level * 200:
                                     self.create_creep(CARRIER, spawn, {'role': Carrier.role,
                                                                        'room': self._name,
                                                                        'hive': self._name})
                                 else:
-                                    self.all_spawned = True
+                                    hive_attack_flags = _.filter(Game.flags, lambda f: f.name.startswith(self._name + '_attack')
+                                                                                       or f.name.startswith('all_attack')
+                                                                 )
+                                    if len(Object.keys(hive_attack_flags)) > 0:
+                                        for flag in hive_attack_flags:
+                                            c_type = flag.name.split('_attack_')[1]
+                                            if c_type:
+                                                self.create_creep(c_type, spawn, {'role': c_type,
+                                                                                  'flag': flag.name,
+                                                                                  'hive': self._name})
+                                    else:
+                                        self.all_spawned = True
 
     def create_creep(self, creep_type, spawn, memory):
         if memory == undefined:

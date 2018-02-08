@@ -32,6 +32,9 @@ class RemoteCarrier(Worker):
 
     def run_creep(self):
         if _.sum(self.creep.carry) < self.creep.carryCapacity:
+            if not self.creep.memory.empty:
+                self.creep.memory.empty = True
+
             if self.creep.room.name != self.creep.memory.room:
                 # if not find a route to there
                 exit_dir = self.creep.room.findExitTo(self.creep.memory.room)
@@ -63,6 +66,8 @@ class RemoteCarrier(Worker):
                             self.creep.moveTo(source, {'maxRooms': 1,
                                                        'range': 4})
         else:
+            if self.creep.memory.empty:
+                self.creep.memory.empty = False
             if self.creep.room.name != self.creep.memory.hive:
                 exit_dir = self.creep.room.findExitTo(self.creep.memory.hive)
                 if exit_dir:

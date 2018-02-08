@@ -70,5 +70,7 @@ class Creeps:
             else:
                 t = target
             path = self.hive.path_cache.get_path(self.creep.pos, t)
-            self.creep.moveByPath(path)
+            res =  self.creep.moveByPath(path)
+            if res != OK and res != ERR_TIRED:
+                console.log(self.creep.name, res)
 

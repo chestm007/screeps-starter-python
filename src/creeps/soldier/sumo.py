@@ -21,6 +21,8 @@ class Sumo(Soldier):
          MOVE, MOVE, MOVE, MOVE, MOVE,
          MOVE, MOVE, MOVE, MOVE, MOVE,
          MOVE, MOVE, MOVE, MOVE, MOVE,
+         MOVE, MOVE, MOVE, MOVE, MOVE,
+         HEAL, HEAL, HEAL, HEAL, HEAL,
          HEAL, HEAL, HEAL, HEAL, HEAL,
          ATTACK, ATTACK, ATTACK, ATTACK, ATTACK]
     ]
@@ -34,25 +36,33 @@ class Sumo(Soldier):
                     room_exit = self.creep.pos.findClosestByRange(exit_dir)
                     if room_exit:
                         damaged_creep = self.creep.pos.findClosestByRange(
-                            FIND_MY_CREEPS, {'filter': lambda c: c.hitsMax - c.hits > 200})
+                            FIND_MY_CREEPS, {'filter': lambda c: c.hitsMax - c.hits > 1200})
                         if damaged_creep:
                             self.creep.heal(damaged_creep)
                             self.creep.rangedHeal(damaged_creep)
-                        self.creep.moveTo(room_exit, {'maxRooms': 1,
-                                                      'ignoreCreeps': True})
+                        self.creep.moveTo(room_exit, {'maxRooms': 1,})
+                                                      #'ignoreCreep': True})
             else:
                 if self.creep.hitsMax - self.creep.hits > 200:
                     self.creep.heal(self.creep)
                     self.creep.moveTo(flag, {'ignoreCreeps': True,
                                              'maxRooms': 1})
                 else:
-                    damaged_creep = self.creep.pos.findClosestByRange(
-                        FIND_MY_CREEPS, {'filter': lambda c: c.hitsMax - c.hits > 200})
+                    damaged_creep = Game.creeps[self.creep.memory.damaged_creep]
+                    if not damaged_creep:
+                        damaged_creep = self.creep.pos.findClosestByRange(
+                            FIND_MY_CREEPS, {'filter': lambda c: c.hitsMax - c.hits > 1200})
+
                     if damaged_creep:
-                        self.creep.moveTo(damaged_creep)
+                        if damaged_creep.hitsMax - damaged_creep.hits < 300:
+                            del self.creep.memory.damaged_creep
+                        self.creep.memory.damaged_creep = damaged_creep.name
+                        #self.creep.moveTo(damaged_creep)
                         self.creep.heal(damaged_creep)
                         self.creep.rangedHeal(damaged_creep, {'ignoreCreeps': True,
                                                               'maxRooms': 1})
+                        self.creep.moveTo(flag, {'maxRooms': 1})
+
                     else:
                         target = self._get_target()
                         if target:
@@ -68,12 +78,10 @@ class Sumo(Soldier):
                                                          'maxRooms': 1})
 
     def _get_target(self):
-        target = Game.getObjectById(self.creep.memory.target)
-        if not target:
-            if Game.time % 3 == 0:
-                if self.creep.memory.room == self.creep.room.name:
-                    target = self.creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS)
-                    if target:
-                        self.creep.memory.target = target.id
+        if Game.time % 3 == 0:
+            if Game.flags[self.creep.memory.flag].room.name == self.creep.room.name:
+                target = self.creep.pos.findClosestByRange(FIND_STRUCTURES)
+            if not target:
+                target = self.creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS)
         return target
 

@@ -1,4 +1,5 @@
 from creeps.hive_builder import HiveBuilder
+from creeps.soldier.kiter import Kiter
 from creeps.soldier.remote_defender import RemoteDefender
 from creeps.soldier.sumo import Sumo
 from creeps.worker.hive_claimer import HiveClaimer
@@ -34,7 +35,8 @@ class CreepController(object):
         RemoteCarrier.role: RemoteCarrier,
         RemoteBuilder.role: RemoteBuilder,
         RemoteDefender.role: RemoteDefender,
-        Sumo.role: Sumo
+        Sumo.role: Sumo,
+        Kiter.role: Kiter,
     }
 
     def __init__(self, hive, cache):

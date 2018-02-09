@@ -1,3 +1,5 @@
+import math
+
 from creeps.worker.worker import Worker
 from defs import *
 
@@ -30,11 +32,11 @@ class RemoteCarrier(Worker):
          MOVE, MOVE, MOVE],
     ]
 
-    @staticmethod
-    def build_body(carry_capacity):
-        body = []
-        [body.extend([CARRY, MOVE]) for x in range(int(carry_capacity * 1.1 / 50))]
-        return body
+    #@staticmethod
+    #def build_body(carry_capacity):
+    #    body = []
+    #    [body.extend([CARRY, MOVE]) for x in range(math.floor(carry_capacity * 1.1 / 50))]
+    #    return body
 
     def run_creep(self):
         if _.sum(self.creep.carry) < self.creep.carryCapacity:

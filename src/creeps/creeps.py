@@ -44,7 +44,7 @@ class Creeps:
 
     @classmethod
     def factory_with_body(cls, spawn, memory, body):
-        i = len(cls.body_composition)
+        i = cls.body_composition
         if spawn.room.energyAvailable >= cls._calculate_creation_cost(body):
             console.log('spawning new {} {} creep'.format(i, cls.__name__))
             memory['role'] = cls.role

@@ -14,8 +14,12 @@ __pragma__('noalias', 'update')
 class Kiter(Soldier):
     role = 'kiter'
 
-    body_composition = [RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK,
-                        MOVE, MOVE, MOVE, MOVE, MOVE]
+    body_composition = [[TOUGH, TOUGH, TOUGH, TOUGH, TOUGH,
+                         TOUGH, TOUGH, TOUGH, TOUGH, TOUGH,
+                         RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK,
+                         MOVE, MOVE, MOVE, MOVE, MOVE,
+                         MOVE, MOVE, MOVE, MOVE, MOVE,
+                         MOVE, MOVE, MOVE, MOVE, MOVE]]
 
     def run_creep(self):
 
@@ -31,18 +35,19 @@ class Kiter(Soldier):
             else:
                 target = self._get_target()
                 if target:
-                    self.creep.rangedAttack(target)
                     self.creep.moveTo(target, {'range': 3})
+                    self.creep.rangedAttack(target)
                 else:
                     self.creep.moveTo(flag, {'ignoreCreeps': True,
                                              'maxRooms': 1})
 
     def _get_target(self):
-        target = Game.getObjectById(self.creep.memory.target)
+        target = Game.flags['attack']
         if not target:
-            if Game.time % 3 == 0:
-                if self.creep.memory.room == self.creep.room.name:
+            target = Game.getObjectById(self.creep.memory.target)
+            if not target:
                     target = self.creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS)
+
                     if target:
                         self.creep.memory.target = target.id
         return target

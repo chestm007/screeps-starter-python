@@ -177,10 +177,10 @@ class HiveController:
                                     else:
                                         kite_attack_flags = _.filter(Game.flags, lambda f: f.name.startswith(self._name + '_kite')
                                                                                            or f.name.startswith('all_attack'))
-                                        num_kiters = _.sum(self.creeps, lambda c: c.room == spawn.pos.roomName and
+                                        num_kiters = _.sum(self.creeps, lambda c: c.hive == spawn.pos.roomName and
                                                                                     (c.role == KITER))
                                         if len(Object.keys(kite_attack_flags)) > 0:
-                                            if num_kiters < 2:
+                                            if num_kiters < 6:
                                                 for flag in kite_attack_flags:
                                                     self.create_creep(KITER, spawn, {'role': Kiter.role,
                                                                                      'flag': flag.name,

@@ -2,6 +2,7 @@ from controllers.creep_controller import CreepController
 from controllers.remote_mine_controller import RemoteMineController
 from controllers.tower_controller import TowerController
 from creeps.hive_builder import HiveBuilder
+from creeps.soldier.kiter import Kiter
 from creeps.soldier.sumo import Sumo
 from creeps.soldier.soldier import Soldier
 from creeps.soldier.remote_defender import RemoteDefender
@@ -40,23 +41,25 @@ REMOTE_BUILDER = RemoteBuilder.role
 SOLDIER = Soldier.role
 REMOTE_DEFENDER = RemoteDefender.role
 SUMO = Sumo.role
+KITER = Kiter.role
 
-CREEP_FACTORY_MAP = {
-    HARVESTER: Harvester.factory,
-    BUILDER: Builder.factory,
-    WORKER: Worker.factory,
-    MINER: Miner.factory,
-    CARRIER: Carrier.factory,
-    CLAIMER: Claimer.factory,
-    HIVE_CLAIMER: HiveClaimer.factory,
-    HIVE_BUILDER: HiveBuilder.factory,
-    REMOTE_MINER: RemoteMiner.factory,
-    REMOTE_CARRIER: RemoteCarrier.factory,
-    REMOTE_BUILDER: RemoteBuilder.factory,
+CREEP_MAP = {
+    HARVESTER: Harvester,
+    BUILDER: Builder,
+    WORKER: Worker,
+    MINER: Miner,
+    CARRIER: Carrier,
+    CLAIMER: Claimer,
+    HIVE_CLAIMER: HiveClaimer,
+    HIVE_BUILDER: HiveBuilder,
+    REMOTE_MINER: RemoteMiner,
+    REMOTE_CARRIER: RemoteCarrier,
+    REMOTE_BUILDER: RemoteBuilder,
 
-    SOLDIER: Soldier.factory,
-    REMOTE_DEFENDER: RemoteDefender.factory,
-    SUMO: Sumo.factory
+    SOLDIER: Soldier,
+    REMOTE_DEFENDER: RemoteDefender,
+    SUMO: Sumo,
+    KITER: Kiter
 }
 
 
@@ -172,13 +175,34 @@ class HiveController:
                                                                                   'flag': flag.name,
                                                                                   'hive': self._name})
                                     else:
-                                        self.all_spawned = True
+                                        kite_attack_flags = _.filter(Game.flags, lambda f: f.name.startswith(self._name + '_kite')
+                                                                                           or f.name.startswith('all_attack'))
+                                        num_kiters = _.sum(self.creeps, lambda c: c.room == spawn.pos.roomName and
+                                                                                    (c.role == KITER))
+                                        if len(Object.keys(kite_attack_flags)) > 0:
+                                            if num_kiters < 2:
+                                                for flag in kite_attack_flags:
+                                                    self.create_creep(KITER, spawn, {'role': Kiter.role,
+                                                                                     'flag': flag.name,
+                                                                                     'hive': self._name})
+                                        else:
+                                            self.all_spawned = True
 
     def create_creep(self, creep_type, spawn, memory):
         if memory == undefined:
-            console.log('attempted to create a creep with no memory!: type: {}, spawn:{}'.format(creep_type, spawn.name))
+            console.log('attempted to create a creep with no memory!: type: {}, spawn:{}, hive:{}'.format(
+                creep_type, spawn.name, self._name))
             return
-        return CREEP_FACTORY_MAP[creep_type](spawn, memory)
+
+        return CREEP_MAP[creep_type].factory(spawn, memory)
+
+    def create_creep_with_body(self, creep_type, spawn, memory, body):
+        if memory == undefined:
+            console.log('attempted to create a creep with no memory!: type: {}, spawn:{}, hive:{}'.format(
+                creep_type, spawn.name, self._name))
+            return
+
+        return CREEP_MAP[creep_type].factory_with_body(spawn, memory, body)
 
     def load_memory_settings(self):
         # ensure Memory.rooms[this_room].settings exists and is a dict

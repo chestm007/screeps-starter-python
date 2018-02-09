@@ -30,11 +30,21 @@ class RemoteCarrier(Worker):
          MOVE, MOVE, MOVE],
     ]
 
+    @staticmethod
+    def build_body(carry_capacity):
+        body = []
+        [body.extend([CARRY, MOVE]) for x in range(int(carry_capacity * 1.1 / 50))]
+        return body
+
     def run_creep(self):
         if _.sum(self.creep.carry) < self.creep.carryCapacity:
             if not self.creep.memory.empty:
                 self.creep.memory.empty = True
-
+                # we end the timer here so that we're definitely only calculating the time it took
+                # to move from the miner to the storage, not including wandering around or waiting
+                # for the miner to finish harvesting. if we included this time the autoscaler would
+                # just keep making larger creeps FOREVER
+                # self.end_travel_timer()
             if self.creep.room.name != self.creep.memory.room:
                 # if not find a route to there
                 exit_dir = self.creep.room.findExitTo(self.creep.memory.room)
@@ -68,6 +78,7 @@ class RemoteCarrier(Worker):
         else:
             if self.creep.memory.empty:
                 self.creep.memory.empty = False
+                # self.start_travel_timer()
             if self.creep.room.name != self.creep.memory.hive:
                 exit_dir = self.creep.room.findExitTo(self.creep.memory.hive)
                 if exit_dir:
@@ -81,6 +92,17 @@ class RemoteCarrier(Worker):
                     if storage:
                         self.creep.moveTo(storage, {'maxRooms': 1})
                         self.creep.transfer(storage, RESOURCE_ENERGY)
+
+    def start_travel_timer(self):
+        self.creep.memory.depart_tick = Game.time
+
+    def end_travel_timer(self):
+        time_to_target = Game.time - self.creep.memory.depart_tick
+        avg = self.hive.memory.remote_mines[self.creep.memory.room]
+        if not avg:
+            avg = time_to_target
+        self.hive.memory.remote_mines[self.creep.memory.room].sources[self.creep.memory.source].time_to_source \
+            = (time_to_target + avg) / 2
 
     def _get_source(self):
         pass

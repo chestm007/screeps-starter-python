@@ -43,6 +43,14 @@ class Creeps:
                 return Creeps.create(body, spawn, memory)
 
     @classmethod
+    def factory_with_body(cls, spawn, memory, body):
+        i = len(cls.body_composition)
+        if spawn.room.energyAvailable >= cls._calculate_creation_cost(body):
+            console.log('spawning new {} {} creep'.format(i, cls.__name__))
+            memory['role'] = cls.role
+            return Creeps.create(body, spawn, memory)
+
+    @classmethod
     def create(cls, body, spawn, memory):
         if body is None:
             console.log('Error creating {}: no defined body composition'.format(cls.__name__))

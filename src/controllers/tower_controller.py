@@ -37,6 +37,10 @@ class TowerController:
                 and s.structureType != STRUCTURE_RAMPART
 
             )
+            self.almost_dead_borders = self.all_structures.filter(
+                lambda s: (s.structureType == STRUCTURE_WALL or s.structureType == STRUCTURE_RAMPART)
+                and s.hits < 100
+            )
             self.damaged_walls = self.all_structures.filter(
                 lambda s: s.structureType == STRUCTURE_WALL and s.hits < self.max_wall_hits
             )
@@ -47,7 +51,9 @@ class TowerController:
 
     def run_towers(self):
         for tower in self.towers:
-            if len(self.hostile_creeps) > 0:
+            if len(self.almost_dead_borders) > 0:
+                tower.repair(self.almost_dead_borders[0])
+            elif len(self.hostile_creeps) > 0:
                 tower.attack(self.hostile_creeps[0])
             elif len(self.damaged_structures) > 0:
                 tower.repair(self.damaged_structures[0])

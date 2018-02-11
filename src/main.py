@@ -3,6 +3,7 @@
 #  Game, etc. do exist.
 from Misc.path_cacher import PathCache
 from Misc.query_cacher import Cache
+from components.cli.cli import cli_main
 from controllers.hive_controller import HiveController
 from defs import *
 
@@ -25,6 +26,7 @@ if not Memory.rooms:
 if not Memory.flags:
     Memory.flags = {}
 
+js_global.cli = cli_main
 
 def main():
     """

@@ -74,4 +74,7 @@ class RemoteBuilder(Worker):
                 target = self.creep.pos.findClosestByRange(FIND_CONSTRUCTION_SITES)
             if target:
                 self.creep.memory.target = target.id
+            if not target:
+                target = self.creep.room.controller
+                self.creep.memory.target = target.id
         return target

@@ -32,13 +32,12 @@ class RemoteDefender(Soldier):
         else:
             target = self._get_target()
             if target:
-                self.creep.moveTo(target, {'range': 10,
-                                           'maxRooms': 1})
+                self.creep.moveTo(target, {'maxRooms': 1})
                 self.creep.attack(target)
             else:
                 controller = self.creep.room.controller
                 if controller:
-                    self.creep.moveTo(controller)
+                    self.creep.moveTo(controller, {'range': 3})
 
     def _get_target(self):
         target = Game.getObjectById(self.creep.memory.target)

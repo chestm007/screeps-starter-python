@@ -1,3 +1,4 @@
+from Misc.globals import DEFENSIVE, NORMAL
 from creeps.soldier.remote_defender import RemoteDefender
 from creeps.worker.claimer import Claimer
 from creeps.worker.remote_builder import RemoteBuilder
@@ -66,8 +67,20 @@ class RemoteMineController:
                          if Memory.creeps[n].role == REMOTE_CARRIER}
         self.defenders = {n: Memory.creeps[n] for n in Object.keys(self.creeps)
                           if Memory.creeps[n].role == REMOTE_DEFENDER}
-        #self.builders = {n: Memory.creeps[n] for n in Object.keys(self.creeps)
-        #                 if Memory.creeps[n].role == REMOTE_BUILDER}
+
+        if Game.time % 10 == 0:
+            self.scan_for_hostiles()
+
+        #if self.mode == DEFENSIVE:
+        #    self.controller.pos.createFlag(self.hive._name + '_kite')
+        #else:
+        #    if self.controller:
+        #        flag = self.controller.room.find(FIND_FLAGS).filter(
+        #            lambda f: f.name == self.hive._name + '_kite'
+        #        )
+        #        if not flag:
+        #            self.mode = NORMAL
+
 
     def run(self):
 
@@ -88,46 +101,46 @@ class RemoteMineController:
                 self.memory.controller = None
 
         if self.memory.sources and self.memory.controller:
+            # check if there is defender
+            if len(Object.keys(self.defenders)) <= 0:
+                # spawn defender if there isnt one
+                self.spawn_creep(REMOTE_DEFENDER, {'room': self._name,
+                                                   'hive': self.hive._name})
 
-            # get number of sources
-            num_sources = len(Object.keys(self.sources))
-            # get number of miners
-            num_miners = len(Object.keys(self.miners))
-            # spawn more miners if miners < sources
-            if num_miners < num_sources:
-                miner_targets = [self.miners[c].source for c in Object.keys(self.miners)]
-
-                if len(miner_targets) <= 0:
-                    miner_targets = []
-                unworked_sources = [s for s in self.sources
-                                   if s != undefined and not miner_targets.includes(s.id)]
-                if len(unworked_sources) > 0:
-                    self.spawn_creep(REMOTE_MINER, {'room': self._name,
-                                                    'source': unworked_sources[0].id,
-                                                    'hive': self.hive._name})
-
-            # get number of carries
-            # spawn more carries if carries < miners
             else:
-                num_carriers = len(Object.keys(self.carriers))
-                if num_carriers < num_miners:
-                    carry_targets = [self.carriers[c].source for c in Object.keys(self.carriers)]
-                    if len(carry_targets) <= 0:
-                        carry_targets = []
-                    unworked_sources = [s for s in self.sources
-                                        if s != undefined and not carry_targets.includes(s.id)]
-                    if len(unworked_sources) > 0:
-                        self.spawn_creep(REMOTE_CARRIER, {'room': self._name,
-                                                          'source': unworked_sources[0].id,
-                                                          'storage': self.hive.storage.id,
-                                                          'hive': self.hive._name})
+                # get number of sources
+                num_sources = len(Object.keys(self.sources))
+                # get number of miners
+                num_miners = len(Object.keys(self.miners))
+                # spawn more miners if miners < sources
+                if num_miners < num_sources:
+                    miner_targets = [self.miners[c].source for c in Object.keys(self.miners)]
 
-                # check if there is defender
+                    if len(miner_targets) <= 0:
+                        miner_targets = []
+                    unworked_sources = [s for s in self.sources
+                                       if s != undefined and not miner_targets.includes(s.id)]
+                    if len(unworked_sources) > 0:
+                        self.spawn_creep(REMOTE_MINER, {'room': self._name,
+                                                        'source': unworked_sources[0].id,
+                                                        'hive': self.hive._name})
+
+                # get number of carries
+                # spawn more carries if carries < miners
                 else:
-                    if len(Object.keys(self.defenders)) <= 0:
-                        # spawn defender if there isnt one
-                        self.spawn_creep(REMOTE_DEFENDER, {'room': self._name,
-                                                           'hive': self.hive._name})
+                    num_carriers = len(Object.keys(self.carriers))
+                    if num_carriers < num_miners:
+                        carry_targets = [self.carriers[c].source for c in Object.keys(self.carriers)]
+                        if len(carry_targets) <= 0:
+                            carry_targets = []
+                        unworked_sources = [s for s in self.sources
+                                            if s != undefined and not carry_targets.includes(s.id)]
+                        if len(unworked_sources) > 0:
+                            self.spawn_creep(REMOTE_CARRIER, {'room': self._name,
+                                                              'source': unworked_sources[0].id,
+                                                              'storage': self.hive.storage.id,
+                                                              'hive': self.hive._name})
+
                     #else:
                     #    if len(Object.keys(self.builders)) <= 0:
                     #        self.spawn_creep(REMOTE_BUILDER, {'room': self._name,
@@ -140,6 +153,13 @@ class RemoteMineController:
                 self.hive.create_creep(creep_type,
                                        spawn,
                                        memory)
+
+    def scan_for_hostiles(self):
+        room = Game.rooms[self._name]
+        if room:
+            hostiles = room.find(FIND_HOSTILE_CREEPS)
+            if len(hostiles) > 0:
+                self.mode = DEFENSIVE
 
     def run_claimer(self):
         """

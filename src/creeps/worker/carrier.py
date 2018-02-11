@@ -35,7 +35,7 @@ class Carrier(Worker):
         source = None
         if _.sum(self.creep.carry) <= 0:
             self.creep.memory.filling = True
-        else:
+        elif _.sum(self.creep.carry) >= self.creep.carryCapacity:
             self.creep.memory.filling = False
             del self.creep.memory.source
         if self.creep.memory.source:
@@ -75,8 +75,22 @@ class Carrier(Worker):
                     self.creep.pickup(dropped_energy[0])
             self._harvest_source(source)
         else:
-            res = self._transfer_energy_to_target(self._get_target())
-            if res == ERR_FULL or res == ERR_INVALID_TARGET:
+            target = self._get_target()
+            res = self.creep.transfer(target, RESOURCE_ENERGY)
+            if res == OK:
+                del self.creep.memory.target
+            elif res == ERR_NOT_IN_RANGE:
+                if len(self.creep.pos.findInRange(STRUCTURE_EXTENSION, 5)) > 0:
+                    result = self.creep.moveTo(target, {'ignoreCreeps': True})
+                else:
+                    result = self.creep.moveTo(target)
+            elif res == ERR_FULL:
+                del self.creep.memory.target
+            elif res == ERR_INVALID_TARGET:
+                del self.creep.memory.target
+            else:
+                console.log("[{}] Unknown result from creep.transfer({}, {}): {}".format(
+                    self.creep.name, target, RESOURCE_ENERGY, res))
                 del self.creep.memory.target
 
     def _get_target(self):

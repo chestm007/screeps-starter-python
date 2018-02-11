@@ -51,17 +51,19 @@ class Sumo(Soldier):
                     damaged_creep = Game.creeps[self.creep.memory.damaged_creep]
                     if not damaged_creep:
                         damaged_creep = self.creep.pos.findClosestByRange(
-                            FIND_MY_CREEPS, {'filter': lambda c: c.hitsMax - c.hits > 1200})
+                            FIND_MY_CREEPS, {'filter': lambda c: c.hitsMax - c.hits > 2000})
 
                     if damaged_creep:
                         if damaged_creep.hitsMax - damaged_creep.hits < 300:
                             del self.creep.memory.damaged_creep
                         self.creep.memory.damaged_creep = damaged_creep.name
-                        #self.creep.moveTo(damaged_creep)
                         self.creep.heal(damaged_creep)
                         self.creep.rangedHeal(damaged_creep, {'ignoreCreeps': True,
                                                               'maxRooms': 1})
-                        self.creep.moveTo(flag, {'maxRooms': 1})
+                        if damaged_creep.hits >= damaged_creep.hitsMax:
+                            del self.creep.memory.damaged_creep
+                        self.creep.moveTo(flag, {'maxRooms': 1,
+                                                 'ignoreCreeps': True})
 
                     else:
                         target = self._get_target()
@@ -78,10 +80,10 @@ class Sumo(Soldier):
                                                          'maxRooms': 1})
 
     def _get_target(self):
-        if Game.time % 3 == 0:
-            if Game.flags[self.creep.memory.flag].room.name == self.creep.room.name:
-                target = self.creep.pos.findClosestByRange(FIND_STRUCTURES)
-            if not target:
-                target = self.creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS)
+        #target = Game.getObjectById(self.creep.memory.target)
+        if Game.flags[self.creep.memory.flag].room.name == self.creep.room.name:
+            target = self.creep.pos.findClosestByRange(FIND_STRUCTURES)
+        if not target:
+            target = self.creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS)
         return target
 

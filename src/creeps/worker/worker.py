@@ -193,7 +193,9 @@ class Worker(Creeps):
         if result == OK:
             del self.creep.memory.target
         elif result == ERR_NOT_IN_RANGE:
-            self.creep.moveTo(target)
+            res = self.creep.moveTo(target)
+            if res != OK:
+                console.log(self.creep.name, res)
         elif result == ERR_FULL:
             del self.creep.memory.target
         elif result == ERR_INVALID_TARGET:

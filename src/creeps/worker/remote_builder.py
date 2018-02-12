@@ -16,7 +16,7 @@ class RemoteBuilder(Worker):
 
     body_composition = [
         [WORK, WORK,
-         CARRY, CARRY, CARRY, CARRY, CARRY, CARRY,
+         CARRY, CARRY, CARRY, CARRY, CARRY,
          MOVE, MOVE, MOVE, MOVE],
     ]
 
@@ -37,7 +37,7 @@ class RemoteBuilder(Worker):
             if self.creep.memory.filling:
                 source = self._get_source()
                 if source:
-                    self.creep.moveTo(source)
+                    self.creep.moveTo(source, {'maxRooms': 1})
                     self.creep.pickup(source)
             else:
                 target = self._get_target()
@@ -48,7 +48,7 @@ class RemoteBuilder(Worker):
                             del self.creep.memory.target
                     else:
                         self.creep.build(target)
-                    self.creep.moveTo(target)
+                    self.creep.moveTo(target, {'maxRooms': 1})
 
     def _get_source(self):
         res = self.creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES)
@@ -62,19 +62,14 @@ class RemoteBuilder(Worker):
             target = Game.getObjectById(self.creep.memory.target)
         if not target:
             target = self.get_closest_to_creep(
-                self.structures_in_room.filter(lambda s: s.hits < s.hitsMax / 3 * 2)
-            )
-            if not target:
-                target = self.get_closest_to_creep(
-                    self.construction_sites_in_room.filter(
-                        lambda s: s.structureType == STRUCTURE_SPAWN
-                    )
+                self.construction_sites_in_room.filter(
+                    lambda s: s.structureType == STRUCTURE_SPAWN
                 )
-            if not target:
-                target = self.creep.pos.findClosestByRange(FIND_CONSTRUCTION_SITES)
-            if target:
-                self.creep.memory.target = target.id
-            if not target:
-                target = self.creep.room.controller
-                self.creep.memory.target = target.id
+            )
+        if not target:
+            target = self.creep.pos.findClosestByRange(FIND_CONSTRUCTION_SITES)
+        if target:
+            self.creep.memory.target = target.id
+        if not target:
+            self.creep.suicide()
         return target

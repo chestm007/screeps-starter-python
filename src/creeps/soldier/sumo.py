@@ -80,9 +80,12 @@ class Sumo(Soldier):
                                                          'maxRooms': 1})
 
     def _get_target(self):
-        #target = Game.getObjectById(self.creep.memory.target)
+        target = Game.getObjectById(self.creep.memory.target)
+        if target:
+            if target.hits > target.hitsMax:
+                del self.creep.memory.target
         if Game.flags[self.creep.memory.flag].room.name == self.creep.room.name:
-            target = self.creep.pos.findClosestByRange(FIND_STRUCTURES)
+            target = self.creep.pos.findClosestByRange(FIND_STRUCTURES, {'filter': lambda s: s.structureType != STRUCTURE_KEEPER_LAIR and s.structureType != STRUCTURE_EXTRACTOR})
         if not target:
             target = self.creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS)
         return target

@@ -13,11 +13,23 @@ __pragma__('noalias', 'type')
 
 
 def cli_main(inp):
-    command, args = get_command(inp.split(' '))
+    if inp:
+        command, args = get_command(inp.split(' '))
+    else:
+        command = None
+        args = None
     if command == 'hive':
         hive(args)
-    if command == 'path-cache':
+    elif command == 'path-cache':
         path_cache(args)
+    elif command == 'lowest-ttl':
+        if len(args) != 1:
+            console.log('[room-name]')
+            return
+        creeps = Game.rooms[args[0]].find(FIND_MY_CREEPS)
+        lowest_ttl = _.min(creeps, lambda c: c.ticksToLive)
+        console.log('lowest ttl: {} {}'.format(lowest_ttl.name, lowest_ttl.ticksToLive))
     else:
         console.log('hive       - Hive commands')
         console.log('path-cache - Path cache operations')
+        console.log('lowest-ttl - find creep with lowest ttl in a room')

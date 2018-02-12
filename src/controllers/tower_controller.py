@@ -38,8 +38,8 @@ class TowerController:
 
             )
             self.almost_dead_borders = self.all_structures.filter(
-                lambda s: (s.structureType == STRUCTURE_WALL or s.structureType == STRUCTURE_RAMPART)
-                and s.hits < 100
+                lambda s: (s.structureType == STRUCTURE_RAMPART)
+                and s.hits < 500
             )
             self.damaged_walls = self.all_structures.filter(
                 lambda s: s.structureType == STRUCTURE_WALL and s.hits < self.max_wall_hits

@@ -57,6 +57,10 @@ class RemoteMineController:
             self.memory.controller = None
         self.controller = Game.getObjectById(self.memory.controller)
 
+        if self.memory.needs_builder == undefined:
+            self.memory.needs_builder = False
+        self.needs_builder = self.memory.needs_builder
+
         self.creeps = {n: Memory.creeps[n] for n in Object.keys(Memory.creeps)
                        if Memory.creeps[n].room == self._name}
         self.claimers = {n: Memory.creeps[n] for n in Object.keys(self.creeps)
@@ -67,9 +71,16 @@ class RemoteMineController:
                          if Memory.creeps[n].role == REMOTE_CARRIER}
         self.defenders = {n: Memory.creeps[n] for n in Object.keys(self.creeps)
                           if Memory.creeps[n].role == REMOTE_DEFENDER}
+        self.builders = {n: Memory.creeps[n] for n in Object.keys(self.creeps)
+                         if Memory.creeps[n].role == REMOTE_BUILDER}
 
         if Game.time % 10 == 0:
             self.scan_for_hostiles()
+        if Game.rooms[self._name]:
+            if len(Game.rooms[self._name].find(FIND_CONSTRUCTION_SITES)) > 0:
+                self.needs_builder = True
+            else:
+                self.needs_builder = False
 
         #if self.mode == DEFENSIVE:
         #    self.controller.pos.createFlag(self.hive._name + '_kite')
@@ -141,10 +152,11 @@ class RemoteMineController:
                                                               'storage': self.hive.storage.id,
                                                               'hive': self.hive._name})
 
-                    #else:
-                    #    if len(Object.keys(self.builders)) <= 0:
-                    #        self.spawn_creep(REMOTE_BUILDER, {'room': self._name,
-                    #                                          'hive': self.hive._name})
+                    else:
+                        if self.needs_builder:
+                            if len(Object.keys(self.builders)) <= 0:
+                                self.spawn_creep(REMOTE_BUILDER, {'room': self._name,
+                                                                  'hive': self.hive._name})
 
     def spawn_creep(self, creep_type, memory):
         if self.hive.all_spawned:
@@ -176,7 +188,7 @@ class RemoteMineController:
                     if exit_dir:
                         room_exit = claimer.pos.findClosestByRange(exit_dir)
                         if room_exit:
-                            claimer.moveTo(room_exit)
+                            claimer.moveTo(room_exit, {'maxRooms': 1})
                 else:
                     # scout for objects if they dont exist in memory
                     if not self.memory.sources:
@@ -190,4 +202,4 @@ class RemoteMineController:
                     # moveTo and reserve the room controller
                     res = claimer.reserveController(self.controller)
                     if res == ERR_NOT_IN_RANGE:
-                        claimer.moveTo(self.controller)
+                        claimer.moveTo(self.controller, {'maxRooms': 1})

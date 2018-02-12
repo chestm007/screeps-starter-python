@@ -31,9 +31,11 @@ class Worker(Creeps):
          CARRY, CARRY, CARRY,
          MOVE, MOVE, MOVE, MOVE, MOVE],
         [WORK, WORK, WORK, WORK, WORK,
+         WORK, WORK, WORK, WORK, WORK,
          CARRY, CARRY, CARRY, CARRY, CARRY,
+         CARRY,
          MOVE, MOVE, MOVE, MOVE, MOVE,
-         MOVE, MOVE, MOVE, MOVE, MOVE]
+         MOVE, MOVE, MOVE]
     ]
 
     def _pre_run_checks(self):
@@ -99,6 +101,11 @@ class Worker(Creeps):
                 if source.energyCapacity:
                     if source.energy <= 0:
                         del self.creep.memory.source
+                        source = None
+                elif source.store:
+                    if source.store[RESOURCE_ENERGY] <= 0:
+                        del self.creep.memory.source
+                        source = None
         if not source:
             containers = [Memory.creeps[creep].source_container for creep in Object.keys(Game.creeps)]
             source = self.get_closest_to_creep(
@@ -107,18 +114,14 @@ class Worker(Creeps):
                     and not containers.includes(s.id)
                     and s.store[RESOURCE_ENERGY] > self.creep.carryCapacity * 2
                 ))
-            if source:
-                self.creep.memory.source = source.id
         if not source:
             source = _(self.dropped_resources_in_room.filter(
                 lambda r: r.resourceType == RESOURCE_ENERGY
             )).sample()
-        if source:
-            self.creep.memory.source = source.id
         if not source:
             if self.creep.room.storage:
-                source = self.creep.room.storage
-                self.creep.memory.source = source.id
+                if self.creep.room.storage.store[RESOURCE_ENERGY] > 1000:
+                    source = self.creep.room.storage
             if not source:
                 source = self.get_closest_to_creep(
                     self.structures_in_room.filter(
@@ -130,8 +133,8 @@ class Worker(Creeps):
                 source = _(self.creep.room.find(FIND_SOURCES).filter(
                     lambda s: s.energy > 0
                 )).sample()
-                if source:
-                    self.creep.memory.source = source.id
+        if source:
+            self.creep.memory.source = source.id
         return source
 
     def _harvest_source(self, source):

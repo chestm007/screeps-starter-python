@@ -16,20 +16,14 @@ __pragma__('noalias', 'update')
 class RemoteCarrier(Worker):
     role = 'remote_carrier'
     body_composition = [
-        [CARRY, CARRY, CARRY, CARRY, CARRY,
-         CARRY, CARRY, CARRY, CARRY, CARRY,
-         CARRY, CARRY, CARRY,
-         MOVE, MOVE, MOVE, MOVE, MOVE,
-         MOVE, MOVE, MOVE, MOVE, MOVE,
-         MOVE, MOVE, MOVE],
-        [CARRY, CARRY, CARRY, CARRY, CARRY,
+        [WORK, CARRY, CARRY, CARRY, CARRY,
          CARRY, CARRY, CARRY, CARRY, CARRY,
          CARRY, CARRY, CARRY, CARRY, CARRY,
-         CARRY, CARRY, CARRY,
+         CARRY,CARRY, CARRY, CARRY, CARRY,
+         CARRY,CARRY, CARRY, CARRY,
          MOVE, MOVE, MOVE, MOVE, MOVE,
          MOVE, MOVE, MOVE, MOVE, MOVE,
-         MOVE, MOVE, MOVE, MOVE, MOVE,
-         MOVE, MOVE, MOVE],
+         MOVE, MOVE]
     ]
 
     #@staticmethod
@@ -39,7 +33,7 @@ class RemoteCarrier(Worker):
     #    return body
 
     def run_creep(self):
-        if _.sum(self.creep.carry) < self.creep.carryCapacity:
+        if _.sum(self.creep.carry) <= 0:
             if not self.creep.memory.empty:
                 self.creep.memory.empty = True
                 # we end the timer here so that we're definitely only calculating the time it took
@@ -86,7 +80,13 @@ class RemoteCarrier(Worker):
                 if exit_dir:
                     room_exit = self.creep.pos.findClosestByRange(exit_dir)
                     if room_exit:
-                        self.move_by_cached_path(room_exit)
+                        if self.move_by_cached_path(room_exit):
+                            struc = self.creep.pos.lookFor(LOOK_STRUCTURES).filter(lambda s: s.structureType == STRUCTURE_ROAD)
+                            for s in struc:
+                                if s.hitsMax - s.hits > 500:
+                                    self.creep.repair(s)
+                            if len(struc) <= 0:
+                                self.creep.pos.createConstructionSite(STRUCTURE_ROAD)
             else:
                 sto = self.creep.memory.storage
                 if sto:

@@ -72,13 +72,29 @@ class Creeps:
         return closest
 
     def move_by_cached_path(self, target: RoomObject):
-        if target:
-            if target.pos:
-                t = target.pos
+        pos = self.pos_to_string(self.creep.pos)
+        if self.creep.memory.last_pos != pos:
+            self.creep.memory.last_pos = pos
+            if target:
+                if target.pos:
+                    t = target.pos
+                else:
+                    t = target
+                path = self.hive.path_cache.get_path(self.creep.pos, t)
+                res = self.creep.moveByPath(path)
+                if res != OK and res != ERR_TIRED:
+                    console.log(self.creep.name, res)
+                self.creep.memory.stuck_counter = 0
+                return True
+        else:
+            if not self.creep.memory.stuck_counter:
+                self.creep.memory.stuck_counter = 1
             else:
-                t = target
-            path = self.hive.path_cache.get_path(self.creep.pos, t)
-            res = self.creep.moveByPath(path)
-            if res != OK and res != ERR_TIRED:
-                console.log(self.creep.name, res)
+                self.creep.memory.stuck_counter += 1
+            if self.creep.memory.stuck_counter > 3:
+                self.creep.moveTo(target)
+                return False
 
+    @staticmethod
+    def pos_to_string(pos):
+        return pos.x + 'x' + pos.y

@@ -32,7 +32,6 @@ class Carrier(Worker):
     ]
 
     def run_creep(self):
-        source = None
         if _.sum(self.creep.carry) <= 0:
             self.creep.memory.filling = True
         elif _.sum(self.creep.carry) >= self.creep.carryCapacity:
@@ -57,16 +56,12 @@ class Carrier(Worker):
                     if container
                     and container.store[RESOURCE_ENERGY] > self.creep.carryCapacity * 1.3]
 
-            if source:
-                self.creep.memory.source = source.id
-            if miner_containers:
-                source = reversed(sorted(miner_containers, lambda c: c.store[RESOURCE_ENERGY]))[0]
-                if source:
-                    self.creep.memory.source = source.id
+                if miner_containers:
+                    source = reversed(sorted(miner_containers, lambda c: c.store[RESOURCE_ENERGY]))[0]
             if not source:
                 source = self.creep.room.storage
-                if source:
-                    self.creep.memory.source = source.id
+            if source:
+                self.creep.memory.source = source.id
         if self.creep.memory.filling:
             if source:
                 dropped_energy = source.pos.lookFor(RESOURCE_ENERGY)
@@ -76,6 +71,13 @@ class Carrier(Worker):
             self._harvest_source(source)
         else:
             target = self._get_target()
+            if target:
+                if target.energyCapacity:
+                    if target.energy >= target.energyCapacity:
+                        target = self._get_target()
+                if target.storeCapacity:
+                    if _.sum(target.store) >= target.storeCapacity:
+                        target = self._get_target()
             res = self.creep.transfer(target, RESOURCE_ENERGY)
             if res == OK:
                 del self.creep.memory.target

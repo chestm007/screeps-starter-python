@@ -24,14 +24,19 @@ class PathCache:
 
         cached_path = {'path': Room.serializePath(path),
                        'uses': 1}
-        self.cache[key] = cached_path
+        if not self.cache[_from.roomName]:
+            self.cache[_from.roomName] = {}
+        self.cache[_from.roomName][key] = cached_path
 
     def get_path(self, _from: RoomPosition, to: RoomPosition) -> list:
         """
         will attempt to load path from cache, will add new path to cache if one
         is not found
         """
-        cached_path = self.cache[self.get_path_key(_from, to)]
+        if not self.cache[_from.roomName]:
+            self.cache[_from.roomName] = {}
+        room_cache = self.cache[_from.roomName]
+        cached_path = room_cache[self.get_path_key(_from, to)]
         if cached_path:
             cached_path.uses += 1
             return cached_path.path
@@ -50,16 +55,18 @@ class PathCache:
         self.clean_cache_by_usage(1)
 
     def clean_cache_by_usage(self, usage: int) -> None:
-        if _.size(self.cache) > 3000:  # ~300kb
-            console.log('Cleaning path cache (usage == '+str(usage)+')...')
-            counter = 0
-            for key in Object.keys(self.cache):
-                cached = self.cache[key]
-                if cached.uses == usage:
-                    del self.cache[key]
-                    counter += 1
-            Game.notify('Path cache of usage '+str(usage)+' cleaned! '+counter+' paths removed', 6 * 60)
-            self.clean_cache_by_usage(usage + 1)
+        counter = 0
+        for room_name in Object.keys(self.cache):
+            room_cache = self.cache[room_name]
+            if _.size(room_cache) > 300:
+                console.log('Cleaning path cache (usage == '+str(usage)+')...')
+                for key in Object.keys(room_cache):
+                    cached = room_cache[key]
+                    if cached.uses == usage:
+                        del self.cache[key]
+                        counter += 1
+                Game.notify('Path cache of usage '+str(usage)+' cleaned! '+counter+' paths removed', 6 * 60)
+                self.clean_cache_by_usage(usage + 1)
 
     def show_cache_usage(self) -> None:
         usage_count_counter = {}

@@ -15,6 +15,9 @@ class HiveBuilder(Worker):
     role = 'hive_builder'
 
     body_composition = [
+        [WORK, WORK,
+         CARRY, CARRY, CARRY, CARRY,
+         MOVE, MOVE, MOVE],
         [WORK, WORK, WORK, WORK, WORK,
          CARRY, CARRY, CARRY, CARRY, CARRY,
          MOVE, MOVE, MOVE, MOVE, MOVE,

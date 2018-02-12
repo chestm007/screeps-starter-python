@@ -75,6 +75,7 @@ class HiveController:
         self.spawns = _.filter(spawns, lambda s: s.room.name == self._name)
 
         self.creeps = _.filter(Memory.creeps, lambda c: c.hive == self._name)
+        self.creep_targets = [Memory.creeps[creep].target for creep in Memory.creeps if Memory.creeps[creep].hive == self._name]
         self.creep_controller = CreepController(self, cache)
 
         self.memory = self.room.memory

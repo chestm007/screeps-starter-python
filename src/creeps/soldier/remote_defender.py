@@ -17,6 +17,8 @@ class RemoteDefender(Soldier):
     body_composition = [
         [TOUGH, TOUGH, TOUGH, TOUGH, TOUGH,
          ATTACK, ATTACK, ATTACK, ATTACK, ATTACK,
+         RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK,
+         MOVE, MOVE, MOVE, MOVE, MOVE,
          MOVE, MOVE, MOVE, MOVE, MOVE,
          MOVE, MOVE, MOVE, MOVE, MOVE,
          ]
@@ -32,12 +34,15 @@ class RemoteDefender(Soldier):
         else:
             target = self._get_target()
             if target:
-                self.creep.moveTo(target, {'maxRooms': 1})
+                if self.creep.moveTo(target, {'maxRooms': 1}) != OK:
+                    del self.creep.memory.target
+                self.creep.rangedAttack(target)
                 self.creep.attack(target)
             else:
                 controller = self.creep.room.controller
                 if controller:
-                    self.creep.moveTo(controller, {'range': 3})
+                    self.creep.moveTo(controller, {'maxRooms': 1,
+                                                   'range': 3})
 
     def _get_target(self):
         target = Game.getObjectById(self.creep.memory.target)

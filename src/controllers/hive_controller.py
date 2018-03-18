@@ -90,8 +90,19 @@ class HiveController:
 
         if self.room.storage:
             self.storage = self.room.storage
+            storage_energy = self.storage.store[RESOURCE_ENERGY]
         else:
             self.storage = None
+            storage_energy = 0
+
+        if self.room.terminal:
+            self.terminal = self.room.terminal
+            terminal_energy = self.terminal.store[RESOURCE_ENERGY]
+        else:
+            self.terminal = None
+            terminal_energy = 0
+
+        self.energy_stored = storage_energy + terminal_energy
 
         self.load_memory_settings()
         self.try_spawn_creeps()
@@ -137,7 +148,10 @@ class HiveController:
                     num_workers = _.sum(self.creeps, lambda c: c.room == spawn.pos.roomName and
                                                                (c.role == HARVESTER or c.role == BUILDER))
                     if (num_workers < self.min_workers
-                            or (num_workers < self.max_workers
+                            or (num_workers < (
+                                (self.max_workers if not self.storage else self.energy_stored / 200000)
+                                if self.room.controller.level < 8 else 2
+                                )
                                 and spawn.room.energyAvailable >= spawn.room.energyCapacityAvailable)):
                         self.create_creep(WORKER, spawn, {'role': Harvester.role,
                                                           'room': self._name,
@@ -211,7 +225,7 @@ class HiveController:
         # minimum workers for this room
         self.min_workers = self.memory.settings.min_workers
         if not self.min_workers:
-            self.memory.settings.min_workers = 3
+            self.memory.settings.min_workers = 1
             self.min_workers = self.memory.settings.min_workers
 
         # maximum workers for this room
@@ -223,5 +237,5 @@ class HiveController:
         # maximum resource carriers for this room
         self.max_carriers = self.memory.settings.max_carriers
         if not self.max_carriers:
-            self.memory.settings.max_carriers = 2
+            self.memory.settings.max_carriers = 3
             self.max_carriers = self.memory.settings.max_carriers
